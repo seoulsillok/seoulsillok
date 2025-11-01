@@ -13,29 +13,34 @@ import Layout from '../layouts/Layout.astro';
 <Layout>
 	<div class="hero">
 		<h1>서울 실록</h1>
-		<p>서울의 모든 동네를 기록하다</p>
+		<p class="kr">서울의 모든 동네를 기록하다</p>
+		<p class="en">Documenting future memories of Seoul</p>
 	</div>
 
-	<section class="social-links">
-		<h2>Follow Seoul Sillok</h2>
-		<div class="social-grid">
-			<a href="https://instagram.com/seoulsillok" class="social-card instagram">
-				<img src="/images/instagram.svg" alt="Instagram" />
-				<span>Instagram</span>
-			</a>
-			<a href="https://youtube.com/@seoulsillok" class="social-card youtube">
-				<img src="/images/youtube.svg" alt="YouTube" />
-				<span>YouTube</span>
-			</a>
-			<a href="https://tiktok.com/@seoulsillok" class="social-card tiktok">
-				<img src="/images/tiktok.svg" alt="TikTok" />
-				<span>TikTok</span>
-			</a>
-			<a href="https://soundcloud.com/seoulsillok" class="social-card soundcloud">
-				<img src="/images/soundcloud.svg" alt="SoundCloud" />
-				<span>SoundCloud</span>
-			</a>
+	<section class="map-section">
+		<h2 class="visually-hidden">서울 지도</h2>
+		<!-- 간단한 예시용 SVG 지도. 각 circle을 클릭하면 해당 동네의 상세 페이지로 이동합니다. -->
+		<div class="map-wrapper">
+			<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="서울 간단 지도">
+				<rect width="100%" height="100%" fill="#f7fbff" rx="12" />
+				<!-- 샘플 동네 포인트들 -->
+				<a href="/dong/nonhyeon-dong" hreflang="ko">
+					<circle cx="520" cy="300" r="18" fill="#0b66ff" />
+					<text x="520" y="295" text-anchor="middle" font-size="10" fill="white">논현동</text>
+				</a>
+				<a href="/dong/hapjeong-dong" hreflang="ko">
+					<circle cx="260" cy="240" r="18" fill="#0b66ff" />
+					<text x="260" y="235" text-anchor="middle" font-size="10" fill="white">합정동</text>
+				</a>
+				<a href="/dong/ikseon-dong" hreflang="ko">
+					<circle cx="380" cy="160" r="18" fill="#0b66ff" />
+					<text x="380" y="155" text-anchor="middle" font-size="10" fill="white">익선동</text>
+				</a>
+				<!-- 설명 텍스트 (작게) -->
+				<text x="20" y="30" font-size="14" fill="#0b66ff">지도: 클릭하여 동네 기록 보기</text>
+			</svg>
 		</div>
+		<p class="map-note">※ 지도는 예시입니다. 실제 위치 정보는 추후 업데이트됩니다.</p>
 	</section>
 
 	<section class="featured">
@@ -47,7 +52,7 @@ import Layout from '../layouts/Layout.astro';
 <style>
 	.hero {
 		text-align: center;
-		padding: 4rem 0;
+		padding: 4rem 0 2rem;
 	}
 
 	.hero h1 {
@@ -56,82 +61,77 @@ import Layout from '../layouts/Layout.astro';
 		margin: 0;
 	}
 
-	.hero p {
-		font-size: 1.5rem;
+	.hero p.kr {
+		font-size: 1.2rem;
 		color: var(--text-color);
-		margin-top: 1rem;
+		margin-top: 0.6rem;
 	}
 
-	.social-links {
-		margin: 4rem 0;
+	.hero p.en {
+		font-size: 0.95rem;
+		color: var(--text-color);
+		opacity: 0.85;
+		margin-top: 0.25rem;
 	}
 
-	.social-links h2 {
-		text-align: center;
-		margin-bottom: 2rem;
-	}
-
-	.social-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-		gap: 2rem;
-		padding: 0 1rem;
-	}
-
-	.social-card {
+	.map-section {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		gap: 1rem;
-		padding: 1.5rem;
-		background: white;
+		padding: 2rem 0 3rem;
+	}
+
+	.map-wrapper {
+		width: 100%;
+		max-width: 900px;
+		box-shadow: 0 6px 20px rgba(11,102,255,0.06);
 		border-radius: 12px;
-		text-decoration: none;
-		color: var(--text-color);
-		transition: transform 0.3s ease, box-shadow 0.3s ease;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		overflow: hidden;
 	}
 
-	.social-card:hover {
-		transform: translateY(-5px);
-		box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+	svg {
+		width: 100%;
+		height: auto;
+		display: block;
 	}
 
-	.social-card img {
-		width: 32px;
-		height: 32px;
+	.map-note {
+		color: #666;
+		font-size: 0.95rem;
 	}
 
 	.featured {
 		text-align: center;
-		margin: 4rem 0;
+		margin: 2rem 0 4rem;
 	}
 
 	.cta-button {
 		display: inline-block;
 		background-color: var(--primary-color);
 		color: white;
-		padding: 1rem 2rem;
+		padding: 0.9rem 1.6rem;
 		border-radius: 50px;
 		text-decoration: none;
-		margin-top: 2rem;
+		margin-top: 1rem;
 		transition: background-color 0.3s ease;
 	}
 
 	.cta-button:hover {
-		background-color: #ff3333;
+		opacity: 0.95;
+	}
+
+	.visually-hidden {
+		position: absolute !important;
+		height: 1px; width: 1px;
+		overflow: hidden;
+		clip: rect(1px, 1px, 1px, 1px);
+		white-space: nowrap;
 	}
 
 	@media (max-width: 768px) {
 		.hero h1 {
-			font-size: 2.5rem;
-		}
-
-		.hero p {
-			font-size: 1.2rem;
-		}
-
-		.social-grid {
-			grid-template-columns: 1fr;
+			font-size: 2.2rem;
 		}
 	}
 </style>

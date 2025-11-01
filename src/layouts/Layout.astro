@@ -13,7 +13,8 @@ const { title = "Seoul Sillok" } = Astro.props;
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>{title} - 서울 실록</title>
+		<title>{title} - 서울 실록 / Seoul Sillok</title>
+		<meta name="description" content="서울의 미래 기억을 기록합니다 — Documenting future memories of Seoul" />
 		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 	</head>
 	<body>
@@ -21,11 +22,21 @@ const { title = "Seoul Sillok" } = Astro.props;
 			<div class="nav-content">
 				<a href="/" class="logo">Seoul Sillok</a>
 				<div class="nav-links">
-					<a href="/dong">동네 기록</a>
-					<a href="https://instagram.com/seoulsillok" target="_blank">Instagram</a>
-					<a href="https://youtube.com/@seoulsillok" target="_blank">YouTube</a>
-					<a href="https://tiktok.com/@seoulsillok" target="_blank">TikTok</a>
-					<a href="https://soundcloud.com/seoulsillok" target="_blank">SoundCloud</a>
+					<a href="/dong" title="동네 기록" class="icon-link">
+						<img src="/images/map-pin.svg" alt="map" />
+					</a>
+					<a href="https://instagram.com/seoulsillok" target="_blank" title="Instagram" class="icon-link">
+						<img src="/images/instagram.svg" alt="Instagram" />
+					</a>
+					<a href="https://youtube.com/@seoulsillok" target="_blank" title="YouTube" class="icon-link">
+						<img src="/images/youtube.svg" alt="YouTube" />
+					</a>
+					<a href="https://tiktok.com/@seoulsillok" target="_blank" title="TikTok" class="icon-link">
+						<img src="/images/tiktok.svg" alt="TikTok" />
+					</a>
+					<a href="https://soundcloud.com/seoulsillok" target="_blank" title="SoundCloud" class="icon-link">
+						<img src="/images/soundcloud.svg" alt="SoundCloud" />
+					</a>
 				</div>
 			</div>
 		</nav>
@@ -33,17 +44,41 @@ const { title = "Seoul Sillok" } = Astro.props;
 			<slot />
 		</main>
 		<footer>
-			<p>&copy; {new Date().getFullYear()} Seoul Sillok. All rights reserved.</p>
+			<p>&copy; {new Date().getFullYear()} Seoul Sillok. 서울 실록. All rights reserved.</p>
+			<p class="footer-en">Documenting future memories of Seoul</p>
 		</footer>
 	</body>
 </html>
 
 <style>
 	:root {
-		--primary-color: #FF4B4B;
-		--text-color: #333;
+		--primary-color: #0b66ff; /* 청색 계열 */
+		--text-color: #0b66ff; /* 폰트 색을 푸른색으로 통일 */
 		--background-color: #fff;
 	}
+
+	/* small icon link styles */
+.icon-link img {
+	width: 22px;
+	height: 22px;
+	display: block;
+	opacity: 0.9;
+}
+
+.icon-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.icon-link:hover {
+	opacity: 1;
+	background: rgba(11,102,255,0.06);
+}
 
 	html, body {
 		margin: 0;

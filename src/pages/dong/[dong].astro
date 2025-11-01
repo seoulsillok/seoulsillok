@@ -1,0 +1,111 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const dong = String(Astro.params.dong || '');
+
+// 간단한 샘플 데이터: 실제 포스트 ID/URL은 필요에 따라 채워주세요
+const data = {
+  'nonhyeon-dong': {
+    title: '논현동 기록',
+    instagram: 'https://www.instagram.com/p/Ck-example/',
+    youtube: 'dQw4w9WgXcQ', // sample id
+    soundcloud: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/293'
+  },
+  'hapjeong-dong': {
+    title: '합정동 기록',
+    instagram: 'https://www.instagram.com/p/Ck-example-2/',
+    youtube: '3JZ_D3ELwOQ',
+    soundcloud: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/294'
+  },
+  'ikseon-dong': {
+    title: '익선동 기록',
+    instagram: '',
+    youtube: '2Vv-BfVoq4g',
+    soundcloud: ''
+  }
+};
+
+const entry = (data as any)[dong] || null;
+---
+
+<Layout title={entry ? entry.title : '동네 기록'}>
+  <article>
+    <h1>{entry ? entry.title : '동네 기록'}</h1>
+    <p class="en">Documenting future memories of Seoul — neighborhood record</p>
+
+    {entry ? (
+      <div class="embeds">
+        {entry.instagram ? (
+          <section class="embed instagram">
+            <h2 class="visually-hidden">Instagram</h2>
+            <!-- Instagram embed (간단 샘플). 실제로는 Instagram embed 스크립트가 필요합니다. -->
+            <blockquote class="instagram-media" data-instgrm-permalink={entry.instagram} data-instgrm-version="14"></blockquote>
+            <script async src="//www.instagram.com/embed.js"></script>
+          </section>
+        ) : null}
+
+        {entry.youtube ? (
+          <section class="embed youtube">
+            <h2 class="visually-hidden">YouTube</h2>
+            <div class="video">
+              <iframe width="560" height="315" src={`https://www.youtube.com/embed/${entry.youtube}`} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </section>
+        ) : null}
+
+        {entry.soundcloud ? (
+          <section class="embed soundcloud">
+            <h2 class="visually-hidden">SoundCloud</h2>
+            <iframe width="100%" height="166" scrolling="no" frameborder="no" src={entry.soundcloud}></iframe>
+          </section>
+        ) : null}
+      </div>
+    ) : (
+      <p>해당 동네의 기록이 없습니다. 다른 동네를 선택해 주세요.</p>
+    )}
+
+  </article>
+</Layout>
+
+<style>
+  article {
+    padding: 2rem 0;
+  }
+
+  h1 {
+    color: var(--text-color);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .embeds {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .video iframe {
+    width: 100%;
+    height: 480px;
+    border-radius: 8px;
+    border: 0;
+  }
+
+  .instagram blockquote {
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  .soundcloud iframe {
+    border-radius: 8px;
+    border: 0;
+  }
+
+  .visually-hidden {
+    position: absolute !important;
+    height: 1px; width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+</style>
