@@ -1,14 +1,13 @@
 ---
+---
 import Layout from '../../layouts/Layout.astro';
-
-const dong = String(Astro.params.dong || '');
 
 // 간단한 샘플 데이터: 실제 포스트 ID/URL은 필요에 따라 채워주세요
 const data = {
   'nonhyeon-dong': {
     title: '논현동 기록',
     instagram: 'https://www.instagram.com/p/Ck-example/',
-    youtube: 'dQw4w9WgXcQ', // sample id
+    youtube: 'dQw4w9WgXcQ',
     soundcloud: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/293'
   },
   'hapjeong-dong': {
@@ -25,6 +24,11 @@ const data = {
   }
 };
 
+export async function getStaticPaths() {
+  return Object.keys(data).map((k) => ({ params: { dong: k } }));
+}
+
+const dong = String(Astro.params.dong || '');
 const entry = (data as any)[dong] || null;
 ---
 
