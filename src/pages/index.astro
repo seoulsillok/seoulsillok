@@ -21,7 +21,7 @@ import Layout from '../layouts/Layout.astro';
 		<h2 class="visually-hidden">서울 지도</h2>
 		<!-- Use the provided raster map image (place `seoul_map.jpg` in `public/images/`) -->
 		<div class="map-wrapper">
-			<a href="/dong">
+			<a href="/dong" class="map-link">
 				<img src="/images/seoul_map.jpg" alt="Seoul map" />
 			</a>
 		</div>
@@ -69,16 +69,19 @@ import Layout from '../layouts/Layout.astro';
 
 	.map-wrapper {
 		width: 100%;
-		max-width: 900px;
+		max-width: 1200px;
 		box-shadow: 0 6px 20px rgba(11,102,255,0.06);
-		border-radius: 12px;
+		border-radius: 0;
 		overflow: hidden;
+		height: calc(100vh - var(--footer-height));
 	}
 
-	svg {
+	.map-wrapper img {
 		width: 100%;
-		height: auto;
+		height: 100%;
+		object-fit: contain; /* ensures the image isn't cut */
 		display: block;
+		background: #f7fbff;
 	}
 
 	.map-note {

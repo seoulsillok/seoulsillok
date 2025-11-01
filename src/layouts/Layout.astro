@@ -18,34 +18,30 @@ const { title = "Seoul Sillok" } = Astro.props;
 		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 	</head>
 	<body>
-		<nav>
-			<div class="nav-content">
-				<a href="/" class="logo">Seoul Sillok</a>
-				<div class="nav-links">
-					<a href="/dong" title="동네 기록" class="icon-link">
-						<img src="/images/map-pin.svg" alt="map" />
-					</a>
-					<a href="https://instagram.com/seoulsillok" target="_blank" title="Instagram" class="icon-link">
-						<img src="/images/instagram.svg" alt="Instagram" />
-					</a>
-					<a href="https://youtube.com/@seoulsillok" target="_blank" title="YouTube" class="icon-link">
-						<img src="/images/youtube.svg" alt="YouTube" />
-					</a>
-					<a href="https://tiktok.com/@seoulsillok" target="_blank" title="TikTok" class="icon-link">
-						<img src="/images/tiktok.svg" alt="TikTok" />
-					</a>
-					<a href="https://soundcloud.com/seoulsillok" target="_blank" title="SoundCloud" class="icon-link">
-						<img src="/images/soundcloud.svg" alt="SoundCloud" />
-					</a>
-				</div>
-			</div>
-		</nav>
+		<!-- Top banner removed for minimal layout -->
+		<main>
+			<slot />
+		</main>
 		<main>
 			<slot />
 		</main>
 		<footer>
 			<p>&copy; {new Date().getFullYear()} Seoul Sillok. 서울 실록. All rights reserved.</p>
 			<p class="footer-en">Documenting future memories of Seoul</p>
+			<div class="social-footer">
+				<a href="https://instagram.com/seoulsillok" target="_blank" title="Instagram">
+					<img src="/images/instagram.svg" alt="Instagram" />
+				</a>
+				<a href="https://youtube.com/@seoulsillok" target="_blank" title="YouTube">
+					<img src="/images/youtube.svg" alt="YouTube" />
+				</a>
+				<a href="https://tiktok.com/@seoulsillok" target="_blank" title="TikTok">
+					<img src="/images/tiktok.svg" alt="TikTok" />
+				</a>
+				<a href="https://soundcloud.com/seoulsillok" target="_blank" title="SoundCloud">
+					<img src="/images/soundcloud.svg" alt="SoundCloud" />
+				</a>
+			</div>
 		</footer>
 	</body>
 </html>
@@ -128,18 +124,52 @@ const { title = "Seoul Sillok" } = Astro.props;
 		color: var(--primary-color);
 	}
 
+	:root {
+		--primary-color: #0b66ff; /* 청색 계열 */
+		--text-color: #0b66ff; /* 폰트 색을 푸른색으로 통일 */
+		--background-color: #fff;
+		--footer-height: 120px;
+	}
+
 	main {
 		max-width: 1200px;
-		margin: 80px auto 0;
-		padding: 2rem;
-		min-height: calc(100vh - 180px);
+		margin: 0 auto;
+		padding: 0;
+		min-height: calc(100vh - var(--footer-height));
+		display: block;
 	}
 
 	footer {
 		text-align: center;
-		padding: 2rem;
+		padding: 1rem 1.5rem;
 		background-color: #f5f5f5;
+		height: var(--footer-height);
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.5rem;
 	}
+
+	.social-footer {
+		display: flex;
+		gap: 0.75rem;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.social-footer a {
+		display: inline-flex;
+		width: 36px;
+		height: 36px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 8px;
+		background: transparent;
+		text-decoration: none;
+	}
+
+	.social-footer img { width:22px; height:22px; }
 
 	@media (max-width: 768px) {
 		.nav-content {
