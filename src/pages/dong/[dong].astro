@@ -23,8 +23,13 @@ const data: Record<string, { title: string; instagram: string; youtube: string; 
   }
 };
 
+// Return explicit paths so build won't depend on runtime ordering of module initialization
 export async function getStaticPaths() {
-  return Object.keys(data).map((k) => ({ params: { dong: k } }));
+  return [
+    { params: { dong: 'nonhyeon-dong' } },
+    { params: { dong: 'hapjeong-dong' } },
+    { params: { dong: 'ikseon-dong' } },
+  ];
 }
 
 const dong = String(Astro.params.dong || '');
