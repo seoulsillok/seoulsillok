@@ -1,6 +1,6 @@
 # Seoul Sillok (서울실록)
 
-서울의 모든 동네를 기록하는 웹사이트입니다. 각 동네의 이야기를 Instagram, YouTube, TikTok, SoundCloud를 통해 공유합니다.
+서울의 미래를 기록합니다. 각 동네의 이야기를 Instagram, YouTube, TikTok, SoundCloud를 통해 공유합니다.
 
 ## 🏛 프로젝트 구조
 
