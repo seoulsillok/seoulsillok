@@ -1,0 +1,27 @@
+name = "absolute-aurora"
+account_id = "YOUR_ACCOUNT_ID"
+compatibility_date = "2025-11-01"
+# Set to true if you want to preview using workers.dev
+workers_dev = false
+
+# If deploying to a route, set the route and zone_id below (leave empty to use workers_dev)
+route = "" # e.g. "example.com/*"
+zone_id = ""
+
+[site]
+bucket = "./dist"
+
+[vars]
+# Example variable placeholders. Replace with real values in the Cloudflare dashboard or via wrangler secrets.
+# SESSION binding used by @astrojs/cloudflare for sessions (if used). Create a KV namespace and set binding name to SESSION.
+
+[kv_namespaces]
+bindings = []
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "YOUR_KV_NAMESPACE_ID"
+
+# Observability & source maps
+upload_source_maps = true
+observability = true
