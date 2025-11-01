@@ -6,6 +6,132 @@ import Layout from '../layouts/Layout.astro';
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
+---
+import Layout from '../layouts/Layout.astro';
+---
+
 <Layout>
-	<Welcome />
+	<div class="hero">
+		<h1>서울 실록</h1>
+		<p>서울의 모든 동네를 기록하다</p>
+	</div>
+
+	<section class="social-links">
+		<h2>Follow Seoul Sillok</h2>
+		<div class="social-grid">
+			<a href="https://instagram.com/seoulsillok" class="social-card instagram">
+				<img src="/images/instagram.svg" alt="Instagram" />
+				<span>Instagram</span>
+			</a>
+			<a href="https://youtube.com/@seoulsillok" class="social-card youtube">
+				<img src="/images/youtube.svg" alt="YouTube" />
+				<span>YouTube</span>
+			</a>
+			<a href="https://tiktok.com/@seoulsillok" class="social-card tiktok">
+				<img src="/images/tiktok.svg" alt="TikTok" />
+				<span>TikTok</span>
+			</a>
+			<a href="https://soundcloud.com/seoulsillok" class="social-card soundcloud">
+				<img src="/images/soundcloud.svg" alt="SoundCloud" />
+				<span>SoundCloud</span>
+			</a>
+		</div>
+	</section>
+
+	<section class="featured">
+		<h2>최근 기록된 동네</h2>
+		<a href="/dong" class="cta-button">모든 동네 보기</a>
+	</section>
 </Layout>
+
+<style>
+	.hero {
+		text-align: center;
+		padding: 4rem 0;
+	}
+
+	.hero h1 {
+		font-size: 3.5rem;
+		color: var(--primary-color);
+		margin: 0;
+	}
+
+	.hero p {
+		font-size: 1.5rem;
+		color: var(--text-color);
+		margin-top: 1rem;
+	}
+
+	.social-links {
+		margin: 4rem 0;
+	}
+
+	.social-links h2 {
+		text-align: center;
+		margin-bottom: 2rem;
+	}
+
+	.social-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 2rem;
+		padding: 0 1rem;
+	}
+
+	.social-card {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1.5rem;
+		background: white;
+		border-radius: 12px;
+		text-decoration: none;
+		color: var(--text-color);
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	}
+
+	.social-card:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+	}
+
+	.social-card img {
+		width: 32px;
+		height: 32px;
+	}
+
+	.featured {
+		text-align: center;
+		margin: 4rem 0;
+	}
+
+	.cta-button {
+		display: inline-block;
+		background-color: var(--primary-color);
+		color: white;
+		padding: 1rem 2rem;
+		border-radius: 50px;
+		text-decoration: none;
+		margin-top: 2rem;
+		transition: background-color 0.3s ease;
+	}
+
+	.cta-button:hover {
+		background-color: #ff3333;
+	}
+
+	@media (max-width: 768px) {
+		.hero h1 {
+			font-size: 2.5rem;
+		}
+
+		.hero p {
+			font-size: 1.2rem;
+		}
+
+		.social-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

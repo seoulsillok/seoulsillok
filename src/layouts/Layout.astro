@@ -1,22 +1,121 @@
+---
+interface Props {
+	title?: string;
+}
+
+const { title = "Seoul Sillok" } = Astro.props;
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{title} - 서울 실록</title>
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 	</head>
 	<body>
-		<slot />
+		<nav>
+			<div class="nav-content">
+				<a href="/" class="logo">Seoul Sillok</a>
+				<div class="nav-links">
+					<a href="/dong">동네 기록</a>
+					<a href="https://instagram.com/seoulsillok" target="_blank">Instagram</a>
+					<a href="https://youtube.com/@seoulsillok" target="_blank">YouTube</a>
+					<a href="https://tiktok.com/@seoulsillok" target="_blank">TikTok</a>
+					<a href="https://soundcloud.com/seoulsillok" target="_blank">SoundCloud</a>
+				</div>
+			</div>
+		</nav>
+		<main>
+			<slot />
+		</main>
+		<footer>
+			<p>&copy; {new Date().getFullYear()} Seoul Sillok. All rights reserved.</p>
+		</footer>
 	</body>
 </html>
 
 <style>
-	html,
-	body {
+	:root {
+		--primary-color: #FF4B4B;
+		--text-color: #333;
+		--background-color: #fff;
+	}
+
+	html, body {
 		margin: 0;
+		padding: 0;
+		font-family: 'Noto Sans KR', sans-serif;
+		color: var(--text-color);
+		background-color: var(--background-color);
+	}
+
+	nav {
+		background-color: var(--background-color);
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		position: fixed;
 		width: 100%;
-		height: 100%;
+		top: 0;
+		z-index: 1000;
+	}
+
+	.nav-content {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 1rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.logo {
+		font-size: 1.5rem;
+		font-weight: bold;
+		color: var(--primary-color);
+		text-decoration: none;
+	}
+
+	.nav-links {
+		display: flex;
+		gap: 2rem;
+	}
+
+	.nav-links a {
+		color: var(--text-color);
+		text-decoration: none;
+		transition: color 0.3s ease;
+	}
+
+	.nav-links a:hover {
+		color: var(--primary-color);
+	}
+
+	main {
+		max-width: 1200px;
+		margin: 80px auto 0;
+		padding: 2rem;
+		min-height: calc(100vh - 180px);
+	}
+
+	footer {
+		text-align: center;
+		padding: 2rem;
+		background-color: #f5f5f5;
+	}
+
+	@media (max-width: 768px) {
+		.nav-content {
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.nav-links {
+			flex-direction: column;
+			align-items: center;
+			gap: 1rem;
+		}
 	}
 </style>

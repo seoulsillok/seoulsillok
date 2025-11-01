@@ -1,0 +1,155 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const districts = [
+    {
+        name: "강남구",
+        dongs: ["논현동", "삼성동", "청담동", "압구정동"]
+    },
+    {
+        name: "마포구",
+        dongs: ["합정동", "망원동", "연남동", "상수동"]
+    },
+    // 나머지 구와 동은 필요에 따라 추가
+];
+---
+
+<Layout title="동네 기록 - Seoul Sillok">
+    <div class="dong-container">
+        <h1>서울 동네 기록</h1>
+        <p class="subtitle">각 동네의 SNS 포스트를 확인해보세요</p>
+
+        <div class="districts">
+            {districts.map(district => (
+                <section class="district">
+                    <h2>{district.name}</h2>
+                    <div class="dongs">
+                        {district.dongs.map(dong => (
+                            <div class="dong-card">
+                                <h3>{dong}</h3>
+                                <div class="social-links">
+                                    <a href="#" class="social-link instagram">
+                                        Instagram
+                                    </a>
+                                    <a href="#" class="social-link youtube">
+                                        YouTube
+                                    </a>
+                                    <a href="#" class="social-link tiktok">
+                                        TikTok
+                                    </a>
+                                    <a href="#" class="social-link soundcloud">
+                                        SoundCloud
+                                    </a>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .dong-container {
+        padding: 2rem 0;
+    }
+
+    h1 {
+        text-align: center;
+        color: var(--primary-color);
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 3rem;
+    }
+
+    .districts {
+        display: flex;
+        flex-direction: column;
+        gap: 3rem;
+    }
+
+    .district {
+        background: #f8f8f8;
+        padding: 2rem;
+        border-radius: 16px;
+    }
+
+    .district h2 {
+        margin-bottom: 1.5rem;
+        color: var(--text-color);
+    }
+
+    .dongs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .dong-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .dong-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .dong-card h3 {
+        margin: 0 0 1rem 0;
+        color: var(--text-color);
+    }
+
+    .social-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .social-link {
+        display: block;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        color: white;
+        border-radius: 6px;
+        transition: opacity 0.3s ease;
+    }
+
+    .social-link:hover {
+        opacity: 0.9;
+    }
+
+    .instagram {
+        background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+    }
+
+    .youtube {
+        background: #FF0000;
+    }
+
+    .tiktok {
+        background: #000000;
+    }
+
+    .soundcloud {
+        background: #ff5500;
+    }
+
+    @media (max-width: 768px) {
+        .dongs {
+            grid-template-columns: 1fr;
+        }
+
+        .district {
+            padding: 1.5rem;
+        }
+    }
+</style>
