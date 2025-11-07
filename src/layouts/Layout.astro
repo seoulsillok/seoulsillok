@@ -1,183 +1,296 @@
 ---
 interface Props {
-	title?: string;
+  title?: string;
+  fullScreen?: boolean;
 }
 
-const { title = "Seoul Sillok" } = Astro.props;
+const { title = "Seoul Sillok", fullScreen = false } = Astro.props;
+const pathname = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/', label: 'Map', match: (path: string) => path === '/' },
+  { href: '/about', label: 'About', match: (path: string) => path.startsWith('/about') },
+  { href: '/projects', label: 'Projects', match: (path: string) => path.startsWith('/projects') },
+  { href: '/dong', label: 'Dong Directory', match: (path: string) => path.startsWith('/dong') }
+];
 ---
 
 <!doctype html>
 <html lang="ko">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title} - 서울 실록 / Seoul Sillok</title>
-		<meta name="description" content="서울의 미래를 기록합니다 — Documenting future memories of Seoul" />
-		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-	</head>
-	<body>
-		<!-- Top banner removed for minimal layout -->
-		<main>
-			<slot />
-		</main>
-		<footer>
-			<p>&copy; {new Date().getFullYear()} Seoul Sillok. 서울 실록. All rights reserved.</p>
-			<p class="footer-en">Documenting future memories of Seoul</p>
-			<div class="social-footer">
-				<a href="https://instagram.com/seoulsillok" target="_blank" title="Instagram">
-					<img src="/images/instagram.svg" alt="Instagram" />
-				</a>
-				<a href="https://youtube.com/@seoulsillok" target="_blank" title="YouTube">
-					<img src="/images/youtube.svg" alt="YouTube" />
-				</a>
-				<a href="https://tiktok.com/@seoulsillok" target="_blank" title="TikTok">
-					<img src="/images/tiktok.svg" alt="TikTok" />
-				</a>
-				<a href="https://soundcloud.com/seoulsillok" target="_blank" title="SoundCloud">
-					<img src="/images/soundcloud.svg" alt="SoundCloud" />
-				</a>
-			</div>
-		</footer>
-	</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} - 서울 실록 / Seoul Sillok</title>
+    <meta
+      name="description"
+      content="서울의 미래를 기록합니다 — Documenting future memories of Seoul"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class={`layout ${fullScreen ? 'layout--full' : ''}`}>
+    <header class="site-header">
+      <a class="logo" href="/" aria-label="Seoul Sillok home">
+        <span aria-hidden="true">Seoul Sillok</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        {navLinks.map((link) => {
+          const active = link.match(pathname);
+          return (
+            <a
+              href={link.href}
+              class={['nav-link', active ? 'nav-link--active' : ''].join(' ').trim()}
+              aria-current={active ? 'page' : undefined}
+            >
+              {link.label}
+            </a>
+          );
+        })}
+      </nav>
+    </header>
+
+    <main class={fullScreen ? 'main main--full' : 'main'}>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-copy">
+          <p>&copy; {new Date().getFullYear()} Seoul Sillok · 서울 실록</p>
+          <p class="footer-en">Documenting future memories of Seoul</p>
+        </div>
+        <div class="social-footer" aria-label="Social media links">
+          <a href="https://instagram.com/seoulsillok" target="_blank" rel="noopener noreferrer" title="Instagram" class="icon-link">
+            <img src="/images/instagram.svg" alt="Instagram" />
+          </a>
+          <a href="https://youtube.com/@seoulsillok" target="_blank" rel="noopener noreferrer" title="YouTube" class="icon-link">
+            <img src="/images/youtube.svg" alt="YouTube" />
+          </a>
+          <a href="https://tiktok.com/@seoulsillok" target="_blank" rel="noopener noreferrer" title="TikTok" class="icon-link">
+            <img src="/images/tiktok.svg" alt="TikTok" />
+          </a>
+          <a href="https://soundcloud.com/seoulsillok" target="_blank" rel="noopener noreferrer" title="SoundCloud" class="icon-link">
+            <img src="/images/soundcloud.svg" alt="SoundCloud" />
+          </a>
+        </div>
+      </div>
+    </footer>
+  </body>
 </html>
 
 <style>
-	:root {
-		--primary-color: #0b66ff; /* 청색 계열 */
-		--text-color: #0b66ff; /* 폰트 색을 푸른색으로 통일 */
-		--background-color: #fff;
-	}
+  :root {
+    --primary-color: #0b66ff;
+    --text-color: #0b1f3b;
+    --background-color: #f6f8fc;
+    --footer-height: 140px;
+    --nav-height: 72px;
+  }
 
-	/* small icon link styles */
-.icon-link img {
-	width: 22px;
-	height: 22px;
-	display: block;
-	opacity: 0.9;
-}
+  * {
+    box-sizing: border-box;
+  }
 
-.icon-link {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 36px;
-	height: 36px;
-	border-radius: 8px;
-	transition: background-color 0.15s ease, opacity 0.15s ease;
-}
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    background-color: var(--background-color);
+  }
 
-.icon-link:hover {
-	opacity: 1;
-	background: rgba(11,102,255,0.06);
-}
+  body.layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 
-	html, body {
-		margin: 0;
-		padding: 0;
-		font-family: 'Noto Sans KR', sans-serif;
-		color: var(--text-color);
-		background-color: var(--background-color);
-	}
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    padding: 0 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(12px);
+    background: rgba(246, 248, 252, 0.85);
+    border-bottom: 1px solid rgba(11, 31, 59, 0.08);
+    z-index: 1000;
+  }
 
-	nav {
-		background-color: var(--background-color);
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-		position: fixed;
-		width: 100%;
-		top: 0;
-		z-index: 1000;
-	}
+  .logo {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--text-color);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+  }
 
-	.nav-content {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 1rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
+  .logo:hover {
+    color: var(--primary-color);
+  }
 
-	.logo {
-		font-size: 1.5rem;
-		font-weight: bold;
-		color: var(--primary-color);
-		text-decoration: none;
-	}
+  .site-nav {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
 
-	.nav-links {
-		display: flex;
-		gap: 2rem;
-	}
+  .nav-link {
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    position: relative;
+    padding-bottom: 0.25rem;
+    transition: color 0.2s ease;
+  }
 
-	.nav-links a {
-		color: var(--text-color);
-		text-decoration: none;
-		transition: color 0.3s ease;
-	}
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+  }
 
-	.nav-links a:hover {
-		color: var(--primary-color);
-	}
+  .nav-link:hover,
+  .nav-link:focus-visible {
+    color: var(--primary-color);
+  }
 
-	:root {
-		--primary-color: #0b66ff; /* 청색 계열 */
-		--text-color: #0b66ff; /* 폰트 색을 푸른색으로 통일 */
-		--background-color: #fff;
-		--footer-height: 120px;
-	}
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after {
+    transform: scaleX(1);
+  }
 
-	main {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 0;
-		min-height: calc(100vh - var(--footer-height));
-		display: block;
-	}
+  .nav-link--active {
+    color: var(--primary-color);
+  }
 
-	footer {
-		text-align: center;
-		padding: 1rem 1.5rem;
-		background-color: #f5f5f5;
-		height: var(--footer-height);
-		box-sizing: border-box;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		gap: 0.5rem;
-	}
+  .nav-link--active::after {
+    transform: scaleX(1);
+  }
 
-	.social-footer {
-		display: flex;
-		gap: 0.75rem;
-		justify-content: center;
-		align-items: center;
-	}
+  .main {
+    flex: 1;
+    width: min(960px, 92vw);
+    margin: 0 auto;
+    padding: calc(var(--nav-height) + 2.5rem) clamp(1.5rem, 5vw, 2.75rem) 4rem;
+  }
 
-	.social-footer a {
-		display: inline-flex;
-		width: 36px;
-		height: 36px;
-		align-items: center;
-		justify-content: center;
-		border-radius: 8px;
-		background: transparent;
-		text-decoration: none;
-	}
+  .main--full {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
 
-	.social-footer img { width:22px; height:22px; }
+  .site-footer {
+    background: #0b1630;
+    color: rgba(255, 255, 255, 0.82);
+    padding: 2rem 2.5rem;
+  }
 
-	@media (max-width: 768px) {
-		.nav-content {
-			flex-direction: column;
-			gap: 1rem;
-		}
+  .footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
 
-		.nav-links {
-			flex-direction: column;
-			align-items: center;
-			gap: 1rem;
-		}
-	}
+  .footer-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .footer-en {
+    font-size: 0.9rem;
+    opacity: 0.75;
+  }
+
+  .social-footer {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .icon-link {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: background 0.2s ease;
+  }
+
+  .icon-link img {
+    width: 22px;
+    height: 22px;
+    opacity: 0.92;
+  }
+
+  .icon-link:hover,
+  .icon-link:focus-visible {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  @media (max-width: 960px) {
+    .site-header {
+      padding: 0 1.5rem;
+    }
+
+    .site-nav {
+      gap: 1rem;
+    }
+
+    .main {
+      width: min(100%, 92vw);
+      padding: calc(var(--nav-height) + 2.2rem) clamp(1.25rem, 4.5vw, 2rem) 3.5rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .site-header {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 0.75rem 1.25rem 1rem;
+      height: auto;
+      gap: 0.75rem;
+    }
+
+    .main {
+      padding: calc(var(--nav-height) + 2.2rem) 1.25rem 3rem;
+    }
+
+    .site-nav {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      font-size: 0.9rem;
+    }
+
+    .footer-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
 </style>

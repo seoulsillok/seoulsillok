@@ -1,0 +1,215 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Projects">
+  <section class="hero">
+    <p class="eyebrow">Projects</p>
+    <h1>Seoul Sillok Projects</h1>
+    <p class="lede">서울 실록이 진행 중인 장기 기록 프로젝트들을 소개합니다.</p>
+  </section>
+
+  <article class="project-card" id="dong-project">
+    <header>
+      <span class="project-tag">Ongoing</span>
+      <h2>동(洞) 프로젝트 · Dong Project</h2>
+    </header>
+    <div class="project-body">
+      <p>
+        Dong Project는 서울의 동네를 한 달에 한 곳씩 깊게 탐사하며 기록하는 장기 프로젝트입니다. 매번 하나의 동을 선정하여,
+        동네의 골목, 빛, 소리, 그리고 그 공간에서 만난 사람들의 이야기를 수집합니다.
+      </p>
+      <p>
+        기록은 세 가지 축으로 발행됩니다. 지도 위 인터랙션을 통해 공간의 결을 시각화하고, 인스타그램과 릴스를 통해 현장의 감각을 나누며,
+        사운드와 글을 통해 시간이 지난 후에도 생생히 떠오르는 동네의 공기를 남깁니다.
+      </p>
+      <ul class="deliverables">
+        <li><strong>Field Walk</strong> — 동네를 걷고 현장에서 즉흥적으로 채집한 이미지와 사운드를 기록합니다.</li>
+        <li><strong>Conversation</strong> — 동네 사람, 창업자, 예술가 등과 대화를 나누고 인터뷰를 기록합니다.</li>
+        <li><strong>Digital Archive</strong> — 지도, SNS, 오디오 아카이브로 재구성하여 모두가 접근 가능한 기록을 만듭니다.</li>
+      </ul>
+    </div>
+    <footer class="project-footer">
+      <a class="project-link" href="/" aria-label="Open the interactive Seoul map">지도에서 현재 동네 보기</a>
+      <a class="project-link project-link--secondary" href="/dong">동네 기록 아카이브</a>
+    </footer>
+  </article>
+
+  <section class="future">
+    <h2>다가오는 프로젝트</h2>
+    <p>
+      Seoul Sillok은 향후 사운드 라이브러리와 야간 산책 시리즈 등 다양한 실험을 준비하고 있습니다. 새로운 프로젝트 소식을 가장 먼저 받고 싶다면
+      <a href="https://www.instagram.com/seoulsillok" target="_blank" rel="noopener noreferrer">인스타그램</a>을 팔로우해주세요.
+    </p>
+  </section>
+</Layout>
+
+<style>
+  .hero {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    font-size: 0.85rem;
+    color: rgba(11, 31, 59, 0.55);
+    margin: 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.1rem, 3.8vw, 2.7rem);
+    color: rgba(11, 31, 59, 0.9);
+  }
+
+  .lede {
+    margin: 0;
+    font-size: 1.05rem;
+    color: rgba(11, 31, 59, 0.7);
+    line-height: 1.7;
+  }
+
+  .project-card {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 28px;
+    padding: 2.75rem 2.5rem;
+    box-shadow: 0 30px 60px rgba(11, 31, 59, 0.08);
+    display: grid;
+    gap: 1.75rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .project-card header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .project-tag {
+    align-self: flex-start;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(11, 102, 255, 0.12);
+    color: rgba(11, 31, 59, 0.75);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .project-card h2 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.3rem);
+    color: rgba(11, 31, 59, 0.85);
+  }
+
+  .project-body {
+    display: grid;
+    gap: 1.1rem;
+    color: rgba(11, 31, 59, 0.72);
+    line-height: 1.7;
+  }
+
+  .deliverables {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .deliverables li {
+    padding-left: 0;
+  }
+
+  .deliverables strong {
+    color: rgba(11, 31, 59, 0.88);
+  }
+
+  .project-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .project-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1.6rem;
+    border-radius: 999px;
+    background: rgba(11, 102, 255, 0.88);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .project-link:hover,
+  .project-link:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 22px rgba(11, 102, 255, 0.2);
+  }
+
+  .project-link--secondary {
+    background: rgba(255, 255, 255, 0.85);
+    color: rgba(11, 31, 59, 0.8);
+    border: 1px solid rgba(11, 31, 59, 0.12);
+  }
+
+  .project-link--secondary:hover,
+  .project-link--secondary:focus-visible {
+    box-shadow: 0 12px 24px rgba(11, 31, 59, 0.12);
+  }
+
+  .future {
+    background: rgba(11, 102, 255, 0.08);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    box-shadow: inset 0 0 0 1px rgba(11, 102, 255, 0.12);
+  }
+
+  .future h2 {
+    margin: 0 0 1rem;
+    font-size: 1.9rem;
+    color: rgba(11, 31, 59, 0.88);
+  }
+
+  .future p {
+    margin: 0;
+    line-height: 1.7;
+    color: rgba(11, 31, 59, 0.72);
+  }
+
+  .future a {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .future a:hover,
+  .future a:focus-visible {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 640px) {
+    .project-card {
+      padding: 2.25rem 1.75rem;
+    }
+
+    .project-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .project-link {
+      width: 100%;
+    }
+
+    .future {
+      padding: 2rem 1.5rem;
+    }
+  }
+</style>
