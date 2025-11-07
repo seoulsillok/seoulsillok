@@ -1,119 +1,255 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { dongRecords, getDongBySlug } from '../../data/dongs';
 
-// 간단한 샘플 데이터: 실제 포스트 ID/URL은 필요에 따라 채워주세요
-const data: Record<string, { title: string; instagram: string; youtube: string; soundcloud: string }> = {
-  'nonhyeon-dong': {
-    title: '논현동 기록',
-    instagram: 'https://www.instagram.com/p/Ck-example/',
-    youtube: 'dQw4w9WgXcQ',
-    soundcloud: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/293'
-  },
-  'hapjeong-dong': {
-    title: '합정동 기록',
-    instagram: 'https://www.instagram.com/p/Ck-example-2/',
-    youtube: '3JZ_D3ELwOQ',
-    soundcloud: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/294'
-  },
-  'ikseon-dong': {
-    title: '익선동 기록',
-    instagram: '',
-    youtube: '2Vv-BfVoq4g',
-    soundcloud: ''
-  }
-};
-
-// Return explicit paths so build won't depend on runtime ordering of module initialization
 export async function getStaticPaths() {
-  return [
-    { params: { dong: 'nonhyeon-dong' } },
-    { params: { dong: 'hapjeong-dong' } },
-    { params: { dong: 'ikseon-dong' } },
-  ];
+  return dongRecords.map((dong) => ({
+    params: { dong: dong.slug }
+  }));
 }
 
 const dong = String(Astro.params.dong || '');
-const entry = (data as any)[dong] || null;
+const entry = getDongBySlug(dong);
 ---
 
-<Layout title={entry ? entry.title : '동네 기록'}>
-  <article>
-    <h1>{entry ? entry.title : '동네 기록'}</h1>
-    <p class="en">Documenting future memories of Seoul — neighborhood record</p>
-
+<Layout title={entry ? `${entry.nameKo} 기록` : '동네 기록'}>
+  <article class="dong-page">
     {entry ? (
-      <div class="embeds">
-        {entry.instagram ? (
-          <section class="embed instagram">
-            <h2 class="visually-hidden">Instagram</h2>
-            <!-- Instagram embed (샘플). 실제 작동을 위해선 Instagram의 임베드 스크립트와 실제 URL 필요 -->
-            <blockquote class="instagram-media" data-instgrm-permalink={entry.instagram} data-instgrm-version="14"></blockquote>
-            <script async src="//www.instagram.com/embed.js"></script>
-          </section>
-        ) : null}
+      <>
+        <header class="dong-hero">
+          <p class="eyebrow">Seoul Sillok · {entry.district}</p>
+          <h1>{entry.nameKo}</h1>
+          <p class="hero-sub">{entry.nameEn}</p>
+          <p class="hero-summary">{entry.summary}</p>
+          <div class="hero-actions">
+            {entry.instagramUrl ? (
+              <a class="hero-link" href={entry.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram 기록 보기</a>
+            ) : null}
+            <a class="hero-link hero-link--ghost" href="/" aria-label="인터랙티브 지도에서 동네 보기">지도에서 보기</a>
+          </div>
+        </header>
 
-        {entry.youtube ? (
-          <section class="embed youtube">
-            <h2 class="visually-hidden">YouTube</h2>
-            <div class="video">
-              <iframe width="560" height="315" src={`https://www.youtube.com/embed/${entry.youtube}`} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-          </section>
-        ) : null}
+        <section class="media-grid" aria-label="기록 미디어">
+          {entry.youtubeId ? (
+            <article class="media-card">
+              <h2>YouTube</h2>
+              <div class="media-frame">
+                <iframe
+                  src={`https://www.youtube.com/embed/${entry.youtubeId}`}
+                  title={`${entry.nameKo} YouTube 기록`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </div>
+            </article>
+          ) : null}
 
-        {entry.soundcloud ? (
-          <section class="embed soundcloud">
-            <h2 class="visually-hidden">SoundCloud</h2>
-            <iframe width="100%" height="166" scrolling="no" frameborder="no" src={entry.soundcloud}></iframe>
-          </section>
-        ) : null}
-      </div>
+          {entry.soundcloudEmbedUrl ? (
+            <article class="media-card">
+              <h2>SoundCloud</h2>
+              <div class="media-frame">
+                <iframe
+                  src={entry.soundcloudEmbedUrl}
+                  allow="autoplay"
+                  title={`${entry.nameKo} SoundCloud 기록`}
+                ></iframe>
+              </div>
+            </article>
+          ) : null}
+
+          {entry.instagramUrl ? (
+            <article class="media-card">
+              <h2>Instagram</h2>
+              <p class="media-note">Instagram 임베드는 추후 실제 포스트로 연결됩니다. 현재는 링크로 이동합니다.</p>
+              <a class="media-button" href={entry.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram으로 이동</a>
+            </article>
+          ) : null}
+        </section>
+      </>
     ) : (
-      <p>해당 동네의 기록이 없습니다. 다른 동네를 선택해 주세요.</p>
+      <div class="empty-state">
+        <h1>아직 준비 중인 기록입니다.</h1>
+        <p>곧 {dong}에 대한 기록이 올라옵니다. 다른 동네를 먼저 둘러보세요.</p>
+        <a class="media-button" href="/dong">동네 목록으로 돌아가기</a>
+      </div>
     )}
-
   </article>
 </Layout>
 
 <style>
-  article {
-    padding: 2rem 0;
+  .dong-page {
+    display: grid;
+    gap: 3rem;
+    padding: 2.5rem 0 3.5rem;
+  }
+
+  .dong-hero {
+    display: grid;
+    gap: 1rem;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(228, 234, 255, 0.6));
+    border-radius: 32px;
+    padding: 2.75rem 2.5rem;
+    box-shadow: 0 32px 60px rgba(11, 31, 59, 0.12);
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.85rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(11, 31, 59, 0.55);
   }
 
   h1 {
-    color: var(--text-color);
-    font-size: 2rem;
-    margin-bottom: 1rem;
+    margin: 0;
+    font-size: clamp(2.4rem, 4.6vw, 3rem);
+    color: rgba(11, 31, 59, 0.92);
   }
 
-  .embeds {
+  .hero-sub {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(11, 31, 59, 0.58);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-summary {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: rgba(11, 31, 59, 0.72);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .hero-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1.6rem;
+    border-radius: 999px;
+    background: rgba(11, 102, 255, 0.9);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hero-link:hover,
+  .hero-link:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 28px rgba(11, 102, 255, 0.22);
+  }
+
+  .hero-link--ghost {
+    background: rgba(255, 255, 255, 0.92);
+    color: rgba(11, 31, 59, 0.85);
+    border: 1px solid rgba(11, 31, 59, 0.12);
+  }
+
+  .media-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
-  .video iframe {
-    width: 100%;
-    height: 480px;
-    border-radius: 8px;
-    border: 0;
+  .media-card {
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 28px;
+    padding: 2rem 1.8rem;
+    box-shadow: 0 22px 45px rgba(11, 31, 59, 0.1);
+    display: grid;
+    gap: 1rem;
   }
 
-  .instagram blockquote {
-    max-width: 540px;
-    margin: 0 auto;
+  .media-card h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: rgba(11, 31, 59, 0.85);
+    letter-spacing: 0.02em;
   }
 
-  .soundcloud iframe {
-    border-radius: 8px;
-    border: 0;
-  }
-
-  .visually-hidden {
-    position: absolute !important;
-    height: 1px; width: 1px;
+  .media-frame {
+    position: relative;
+    padding-top: 56.25%;
+    border-radius: 20px;
     overflow: hidden;
-    clip: rect(1px, 1px, 1px, 1px);
-    white-space: nowrap;
+    background: rgba(11, 31, 59, 0.08);
+  }
+
+  .media-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .media-note {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(11, 31, 59, 0.65);
+  }
+
+  .media-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.4rem;
+    border-radius: 999px;
+    background: rgba(11, 102, 255, 0.9);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .media-button:hover,
+  .media-button:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 28px rgba(11, 102, 255, 0.2);
+  }
+
+  .empty-state {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 32px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 28px 60px rgba(11, 31, 59, 0.1);
+    display: grid;
+    gap: 1rem;
+  }
+
+  .empty-state p {
+    margin: 0;
+    color: rgba(11, 31, 59, 0.7);
+  }
+
+  @media (max-width: 720px) {
+    .dong-hero {
+      padding: 2.25rem 1.85rem;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .hero-link,
+    .hero-link--ghost,
+    .media-button {
+      width: 100%;
+    }
+
+    .media-card {
+      padding: 1.6rem 1.5rem;
+    }
   }
 </style>

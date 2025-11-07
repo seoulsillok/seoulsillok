@@ -1,0 +1,171 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About Seoul Sillok">
+  <section class="intro">
+    <p class="eyebrow">About</p>
+    <h1>서울 실록은 미래의 기억을 기록하는 독립 기록실입니다.</h1>
+    <p class="lede">
+      Seoul Sillok은 빠르게 변하는 도시 서울의 동네와 사람, 풍경을 기록하고 공유하는 디지털 아카이브입니다.
+      과거의 실록이 왕조의 역사를 담았다면, 우리는 오늘의 생활문화와 감각을 기록하여 미래의 서울을 상상하고자 합니다.
+    </p>
+  </section>
+
+  <section class="values">
+    <div class="value-card">
+      <h2>도시의 결을 읽다</h2>
+      <p>각 동네의 이야기, 장소, 사운드를 수집하여 서울이 가진 고유의 결을 기록합니다.</p>
+    </div>
+    <div class="value-card">
+      <h2>사람과 기억을 잇다</h2>
+      <p>인터뷰, 사진, 필드 레코딩을 통해 동네 주민과 방문자의 기억을 연결합니다.</p>
+    </div>
+    <div class="value-card">
+      <h2>미래를 상상하다</h2>
+      <p>지도를 기반으로 한 인터랙션과 SNS 기록을 통해 서울의 미래 아카이브를 실험합니다.</p>
+    </div>
+  </section>
+
+  <section class="story">
+    <h2>왜 기록을 시작했나요?</h2>
+    <p>
+      서울은 끊임없이 재개발되고, 이름도 모르는 골목들이 사라집니다. 어느 날 문득, 좋아하던 카페와 골목 풍경이 사라진 것을 보며
+      서울 실록을 시작했습니다. 기록은 단순한 추억 보관이 아니라, 지금 이 도시를 살아가는 방식과 감각을 미래로 전달하는 방법이라고 믿습니다.
+    </p>
+    <p>
+      우리는 매달 한 동네를 선정해 동네의 리듬을 따라 걷고, 그 공간의 빛과 소리를 수집합니다. 기록은 인스타그램, 사운드, 글과 지도 등
+      다양한 형태로 발행되며, 누구나 쉽게 접근할 수 있는 열린 아카이브를 목표로 합니다.
+    </p>
+  </section>
+
+  <section class="cta">
+    <h2>Seoul Sillok과 함께 걸어보기</h2>
+    <p>
+      새로운 기록이 올라올 때 알림을 받고 싶다면 인스타그램에서 <a href="https://www.instagram.com/seoulsillok" target="_blank" rel="noopener noreferrer">@seoulsillok</a>을 팔로우하고,
+      프로젝트에 참여하거나 협업을 제안하고 싶다면 <a href="mailto:hello@seoulsillok.com">hello@seoulsillok.com</a>으로 연락주세요.
+    </p>
+  </section>
+</Layout>
+
+<style>
+  .intro {
+    display: grid;
+    gap: 1.25rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    font-size: 0.85rem;
+    color: rgba(11, 31, 59, 0.55);
+    margin: 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.1rem, 4vw, 2.8rem);
+    line-height: 1.25;
+    color: rgba(11, 31, 59, 0.9);
+  }
+
+  .lede {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: rgba(11, 31, 59, 0.75);
+    margin: 0;
+  }
+
+  .values {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 3.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .value-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 16px 40px rgba(11, 31, 59, 0.08);
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .value-card h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: rgba(11, 31, 59, 0.85);
+  }
+
+  .value-card p {
+    margin: 0;
+    color: rgba(11, 31, 59, 0.65);
+    line-height: 1.6;
+  }
+
+  .story {
+    display: grid;
+    gap: 1.2rem;
+    margin-bottom: 3.5rem;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(228, 234, 255, 0.6));
+    border-radius: 28px;
+    padding: 2.75rem 2.5rem;
+    box-shadow: 0 20px 60px rgba(11, 31, 59, 0.1);
+  }
+
+  .story h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: rgba(11, 31, 59, 0.85);
+  }
+
+  .story p {
+    margin: 0;
+    line-height: 1.75;
+    color: rgba(11, 31, 59, 0.72);
+  }
+
+  .cta {
+    margin: 4rem 0 1rem;
+    text-align: center;
+    background: rgba(11, 102, 255, 0.08);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    box-shadow: inset 0 0 0 1px rgba(11, 102, 255, 0.1);
+  }
+
+  .cta h2 {
+    margin: 0 0 1rem;
+    font-size: 1.8rem;
+    color: rgba(11, 31, 59, 0.88);
+  }
+
+  .cta p {
+    margin: 0;
+    color: rgba(11, 31, 59, 0.7);
+    line-height: 1.7;
+  }
+
+  .cta a {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .cta a:hover,
+  .cta a:focus-visible {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 640px) {
+    .story {
+      padding: 2.25rem 1.75rem;
+    }
+
+    .cta {
+      padding: 2rem 1.5rem;
+    }
+  }
+</style>
