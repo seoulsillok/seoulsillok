@@ -145,6 +145,25 @@ export const dongRecords: DongRecord[] = [
     featured: false
   },
   {
+    slug: 'hoegi-dong',
+    nameKo: '회기동',
+    nameEn: 'Hoegi-dong',
+    district: '동대문구',
+    summary:
+      'Kyung Hee University가 감싸고 있는 회기동은 캠퍼스 산책과 합리적인 맛집이 공존하는 동네입니다. 산책 코스와 카페, 저녁 식당을 이어 기록합니다.',
+    instagramUrl: hashtagUrl('회기동'),
+    hashtags: [
+      '회기동',
+      'hoegidong',
+      'hoegi',
+      '회기동맛집',
+      '회기동카페',
+      'hoegi_dong',
+      '회기동산책'
+    ],
+    alternateSlugs: ['hoegi-dong-walk', 'hoegidong', 'hoegi']
+  },
+  {
     slug: 'huam-dong',
     nameKo: '후암동',
     nameEn: 'Huam-dong',
