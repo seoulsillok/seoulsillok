@@ -1,0 +1,801 @@
+---
+import { dongRecords } from '../data/dongs';
+
+const fallbackRegions = dongRecords
+  .filter((dong) => Boolean(dong.mapPath))
+  .map((dong) => ({
+    id: dong.slug,
+    label: `${dong.nameKo} · ${dong.nameEn}`,
+    nameKo: dong.nameKo,
+    nameEn: dong.nameEn,
+    district: dong.district,
+    instagram: dong.instagramUrl,
+    path: dong.mapPath
+  }))
+  .sort((a, b) => a.nameKo.localeCompare(b.nameKo, 'ko'));
+
+const featuredRecords = dongRecords
+  .filter((dong) => dong.featured)
+  .sort((a, b) => a.nameKo.localeCompare(b.nameKo, 'ko'));
+
+const overlayFeatured = featuredRecords.length > 0 ? featuredRecords : dongRecords.slice(0, 8);
+---
+
+<section class="map-viewport" aria-labelledby="map-title">
+  <div class="map-gradient" aria-hidden="true"></div>
+
+  <svg
+    viewBox="0 0 800 800"
+    class="seoul-map"
+    role="img"
+    aria-labelledby="map-graphic-title map-graphic-description"
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <defs>
+      <radialGradient id="map-gradient" cx="50%" cy="40%" r="80%">
+        <stop offset="0%" stop-color="#dfeafe" stop-opacity="0.95" />
+        <stop offset="70%" stop-color="#b4c8ff" stop-opacity="0.75" />
+        <stop offset="100%" stop-color="#8aa9ff" stop-opacity="0.35" />
+      </radialGradient>
+      <filter id="map-shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="rgba(11,31,59,0.22)" flood-opacity="0.22" />
+      </filter>
+    </defs>
+
+    <title id="map-graphic-title">서울 인터랙티브 지도</title>
+    <desc id="map-graphic-description">동네를 가볍게 가리키면 강조되고, 클릭하면 연결된 인스타그램 기록을 새 창으로 엽니다.</desc>
+
+    <rect x="80" y="40" width="640" height="640" fill="url(#map-gradient)" rx="120" ry="120" opacity="0.55" />
+
+    <g class="map-fallback" data-fallback="true">
+      {fallbackRegions.map((region) => (
+        <path
+          class="dong-shape"
+          id={`dong-${region.id}`}
+          role="link"
+          tabindex="0"
+          d={region.path}
+          aria-label={`${region.label} — Instagram으로 이동`}
+          data-name={region.label}
+          data-instagram={region.instagram || ''}
+          data-default-instagram={region.instagram || ''}
+          data-slug={region.id}
+          data-fallback="true"
+        >
+          <title>{region.label}</title>
+        </path>
+      ))}
+    </g>
+  </svg>
+
+  <div id="map-tooltip" class="map-tooltip" role="presentation"></div>
+
+  <article class="map-overlay">
+    <header class="overlay-header">
+      <p class="eyebrow">서울 실록 · Seoul Sillok</p>
+      <h1 id="map-title">서울을 동네별로 탐험하세요</h1>
+      <p id="map-description" class="overlay-copy">
+        마우스나 키보드로 지도를 가리키면 해당 동네가 빛나고, 선택하면 연결된 인스타그램 기록이 새 창으로 열립니다.
+      </p>
+    </header>
+    <div class="overlay-actions">
+      <a class="overlay-link" href="/about">About</a>
+      <a class="overlay-link overlay-link--ghost" href="/projects">Projects</a>
+    </div>
+    <ul class="overlay-dongs" aria-label="대표 동네 바로가기">
+      {overlayFeatured.map((region) => (
+        <li class="overlay-dong" key={region.slug}>
+          <a href={`/dong/${region.slug}`} data-dong-link={region.slug} data-default-instagram={region.instagramUrl || ''}>
+            <span class="dong-name">{region.nameKo}</span>
+            <span class="dong-meta">{region.nameEn} · {region.district}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </article>
+</section>
+
+<script
+  type="application/json"
+  id="dong-meta"
+  set:html={JSON.stringify(
+    dongRecords.map(({ mapPath, ...rest }) => rest)
+  )}
+></script>
+
+<script client:load>
+  const GEOJSON_URL =
+    'https://raw.githubusercontent.com/southkorea/seoul-maps/master/geojson/seoul_submunicipalities_geo_simple.json';
+
+  const tooltip = document.getElementById('map-tooltip');
+  const container = document.querySelector('.map-viewport');
+  const svg = document.querySelector('.seoul-map');
+  const metaElement = document.getElementById('dong-meta');
+
+  const metadata = (() => {
+    if (!metaElement) return [];
+    try {
+      return JSON.parse(metaElement.textContent || '[]');
+    } catch (error) {
+      console.warn('동네 메타데이터를 파싱하지 못했습니다.', error);
+      return [];
+    }
+  })();
+
+  const metaBySlug = new Map();
+  const metaByKey = new Map();
+  const metaByHashtag = new Map();
+
+  metadata.forEach((entry) => {
+    if (!entry) return;
+    metaBySlug.set(entry.slug, entry);
+    if (Array.isArray(entry.alternateSlugs)) {
+      entry.alternateSlugs.forEach((alt) => {
+        if (alt) {
+          metaBySlug.set(alt, entry);
+        }
+      });
+    }
+    const keys = [entry.nameKo, entry.nameEn, entry.slug];
+    keys.forEach((key) => {
+      if (!key) return;
+      metaByKey.set(String(key).toLowerCase(), entry);
+    });
+    if (Array.isArray(entry.hashtags)) {
+      entry.hashtags.forEach((tag) => {
+        if (!tag) return;
+        const normalized = String(tag).replace(/^#/, '').toLowerCase();
+        metaByHashtag.set(normalized, entry);
+        metaByKey.set(normalized, entry);
+      });
+    }
+  });
+
+  const shapeRegistry = new Map();
+
+  const slugify = (value) => {
+    if (!value) return '';
+    return String(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s-]/g, '')
+      .trim()
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase();
+  };
+
+  const hashtagUrlFromName = (value) => {
+    if (!value) return '';
+    let compact = '';
+    try {
+      compact = String(value)
+        .replace(/^#/, '')
+        .replace(/[^\p{L}\p{N}]+/gu, '')
+        .trim();
+    } catch (error) {
+      compact = String(value)
+        .replace(/^#/, '')
+        .replace(/[^A-Za-z0-9]+/g, '')
+        .trim();
+    }
+    if (!compact) return '';
+    return `https://www.instagram.com/explore/tags/${encodeURIComponent(compact)}/`;
+  };
+
+  const setTooltipPosition = (x, y) => {
+    if (!tooltip || !container) return;
+    const rect = container.getBoundingClientRect();
+    tooltip.style.left = `${x - rect.left + 16}px`;
+    tooltip.style.top = `${y - rect.top + 16}px`;
+  };
+
+  const showTooltip = (event, shape, name) => {
+    if (!tooltip || !container || !shape) return;
+    tooltip.textContent = name || shape.dataset.name || '';
+    tooltip.classList.add('is-visible');
+
+    if (event instanceof MouseEvent) {
+      setTooltipPosition(event.clientX, event.clientY);
+    } else {
+      const rect = shape.getBoundingClientRect();
+      setTooltipPosition(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+  };
+
+  const hideTooltip = () => {
+    if (!tooltip) return;
+    tooltip.classList.remove('is-visible');
+  };
+
+  const moveTooltip = (event) => {
+    if (!tooltip || !tooltip.classList.contains('is-visible')) return;
+    setTooltipPosition(event.clientX, event.clientY);
+  };
+
+  const openInstagram = (shape) => {
+    if (!shape) return;
+    const instagram =
+      shape.dataset.instagram || shape.dataset.defaultInstagram || '';
+    if (!instagram) return;
+    window.open(instagram, '_blank', 'noopener,noreferrer');
+  };
+
+  const bindShape = (shape) => {
+    if (!shape || shape.dataset.bound === 'true') return;
+    const label = shape.dataset.name || '';
+    const slug = shape.dataset.slug || label;
+
+    if (!shape.dataset.defaultInstagram) {
+      const fallback = hashtagUrlFromName(label.split('·')[0]?.trim() || slug);
+      if (fallback) {
+        shape.dataset.defaultInstagram = fallback;
+      }
+    }
+
+    if (!shape.dataset.instagram && shape.dataset.defaultInstagram) {
+      shape.dataset.instagram = shape.dataset.defaultInstagram;
+    }
+
+    shape.addEventListener('mouseenter', (event) => showTooltip(event, shape, label));
+    shape.addEventListener('mousemove', moveTooltip);
+    shape.addEventListener('mouseleave', hideTooltip);
+    shape.addEventListener('focus', (event) => showTooltip(event, shape, label));
+    shape.addEventListener('blur', hideTooltip);
+    shape.addEventListener('click', () => openInstagram(shape));
+    shape.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openInstagram(shape);
+      }
+    });
+
+    shape.dataset.bound = 'true';
+    if (slug) {
+      shapeRegistry.set(slug, shape);
+    }
+  };
+
+  const bindExistingShapes = () => {
+    document.querySelectorAll('.dong-shape').forEach((shape) => bindShape(shape));
+  };
+
+  bindExistingShapes();
+
+  const collectCoordinates = (geometry, callback) => {
+    if (!geometry || typeof callback !== 'function') return;
+    const visitPolygon = (polygon) => {
+      polygon.forEach((ring) => {
+        ring.forEach((coord) => {
+          if (Array.isArray(coord) && coord.length >= 2) {
+            callback(coord);
+          }
+        });
+      });
+    };
+
+    switch (geometry.type) {
+      case 'Polygon':
+        visitPolygon(geometry.coordinates || []);
+        break;
+      case 'MultiPolygon':
+        (geometry.coordinates || []).forEach(visitPolygon);
+        break;
+      case 'GeometryCollection':
+        (geometry.geometries || []).forEach((geo) => collectCoordinates(geo, callback));
+        break;
+      default:
+        break;
+    }
+  };
+
+  const geometryToPath = (geometry, project) => {
+    if (!geometry) return '';
+    const segments = [];
+
+    const projectPoint = (coord) => {
+      const [x, y] = project(coord);
+      return `${x.toFixed(2)} ${y.toFixed(2)}`;
+    };
+
+    const writePolygon = (polygon) => {
+      polygon.forEach((ring) => {
+        ring.forEach((coord, index) => {
+          if (!Array.isArray(coord) || coord.length < 2) return;
+          segments.push(`${index === 0 ? 'M' : 'L'}${projectPoint(coord)}`);
+        });
+        if (ring.length) {
+          segments.push('Z');
+        }
+      });
+    };
+
+    switch (geometry.type) {
+      case 'Polygon':
+        writePolygon(geometry.coordinates || []);
+        break;
+      case 'MultiPolygon':
+        (geometry.coordinates || []).forEach(writePolygon);
+        break;
+      case 'GeometryCollection':
+        (geometry.geometries || []).forEach((geo) => {
+          const nested = geometryToPath(geo, project);
+          if (nested) segments.push(nested);
+        });
+        break;
+      default:
+        break;
+    }
+
+    return segments.join(' ');
+  };
+
+  const buildRegionMeta = (feature, index) => {
+    const props = feature?.properties || {};
+    const adminName = typeof props.adm_nm === 'string' ? props.adm_nm : '';
+    const adminParts = adminName ? adminName.trim().split(/\s+/) : [];
+    const nameKo =
+      props.emd_kor_nm ||
+      props.name_kr ||
+      props.kor_name ||
+      (adminParts.length ? adminParts[adminParts.length - 1] : props.name) ||
+      '';
+    const nameEnSource =
+      props.name_eng ||
+      props.emd_eng_nm ||
+      props.name_en ||
+      props.eng_name ||
+      props.name ||
+      '';
+    const nameEn = typeof nameEnSource === 'string' ? nameEnSource : '';
+    const district =
+      props.sig_kor_nm ||
+      (adminParts.length > 1 ? adminParts[adminParts.length - 2] : '') ||
+      props.sigungu ||
+      '';
+    const codeSource =
+      props.code ||
+      props.adm_cd ||
+      props.adm_cd2 ||
+      props.id ||
+      props.objectid ||
+      props.EMD_CD ||
+      props.emd_cd ||
+      '';
+    const slugSeed = props.slug || nameEn || codeSource || nameKo || `dong-${index}`;
+    let slug = slugify(slugSeed);
+    if (!slug && codeSource) {
+      slug = `dong-${codeSource}`.toLowerCase();
+    }
+    if (!slug) {
+      slug = slugify(nameKo) || slugify(nameEn) || `dong-${index}`;
+    }
+
+    const normalizedSlug = slug.replace(/-dong$/, '');
+    const record =
+      metaBySlug.get(slug) ||
+      metaBySlug.get(normalizedSlug) ||
+      metaByKey.get(String(nameKo || '').toLowerCase()) ||
+      metaByKey.get(String(nameEn || '').toLowerCase()) ||
+      metaByKey.get(String(codeSource || '').toLowerCase()) ||
+      null;
+
+    const resolvedSlug = record?.slug || slug;
+    const resolvedNameKo = record?.nameKo || nameKo || adminParts.slice(-1)[0] || resolvedSlug;
+    const resolvedNameEn = record?.nameEn || nameEn || '';
+    const resolvedDistrict = record?.district || district || adminParts.slice(-2, -1)[0] || '';
+    const label = resolvedNameEn
+      ? `${resolvedNameKo} · ${resolvedNameEn}`
+      : resolvedNameKo;
+
+    const fallbackInstagram =
+      record?.instagramUrl ||
+      hashtagUrlFromName(resolvedNameKo) ||
+      hashtagUrlFromName(resolvedNameEn) ||
+      hashtagUrlFromName(resolvedSlug);
+
+    return {
+      slug: resolvedSlug,
+      label,
+      instagram: fallbackInstagram
+    };
+  };
+
+  const hydrateGeojson = async () => {
+    if (!svg) return false;
+
+    try {
+      const response = await fetch(GEOJSON_URL, { mode: 'cors' });
+      if (!response.ok) throw new Error(`status ${response.status}`);
+      const geojson = await response.json();
+      const features = Array.isArray(geojson?.features) ? geojson.features : [];
+      if (!features.length) return false;
+
+      let minLng = Number.POSITIVE_INFINITY;
+      let maxLng = Number.NEGATIVE_INFINITY;
+      let minLat = Number.POSITIVE_INFINITY;
+      let maxLat = Number.NEGATIVE_INFINITY;
+
+      features.forEach((feature) => {
+        collectCoordinates(feature.geometry, ([lng, lat]) => {
+          if (typeof lng !== 'number' || typeof lat !== 'number') return;
+          if (lng < minLng) minLng = lng;
+          if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat;
+          if (lat > maxLat) maxLat = lat;
+        });
+      });
+
+      if (!isFinite(minLng) || !isFinite(maxLng) || !isFinite(minLat) || !isFinite(maxLat)) {
+        return false;
+      }
+
+      const width = 800;
+      const height = 800;
+      const padding = 48;
+      const lngSpan = maxLng - minLng || 1;
+      const latSpan = maxLat - minLat || 1;
+
+      const project = ([lng, lat]) => {
+        const x = padding + ((lng - minLng) / lngSpan) * (width - padding * 2);
+        const y = padding + ((maxLat - lat) / latSpan) * (height - padding * 2);
+        return [x, y];
+      };
+
+      const NS = 'http://www.w3.org/2000/svg';
+      const generatedGroup = document.createElementNS(NS, 'g');
+      generatedGroup.setAttribute('data-generated', 'geojson');
+
+      const frag = document.createDocumentFragment();
+
+      features.forEach((feature, index) => {
+        const pathData = geometryToPath(feature.geometry, project);
+        if (!pathData) return;
+        const regionMeta = buildRegionMeta(feature, index);
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('class', 'dong-shape');
+        path.setAttribute('role', 'link');
+        path.setAttribute('tabindex', '0');
+        path.setAttribute('d', pathData);
+        path.setAttribute('aria-label', `${regionMeta.label} — Instagram으로 이동`);
+        path.dataset.name = regionMeta.label;
+        path.dataset.slug = regionMeta.slug;
+        if (regionMeta.instagram) {
+          path.dataset.defaultInstagram = regionMeta.instagram;
+          path.dataset.instagram = regionMeta.instagram;
+        }
+        frag.appendChild(path);
+      });
+
+      generatedGroup.appendChild(frag);
+
+      const fallbackGroup = svg.querySelector('.map-fallback');
+      if (fallbackGroup) {
+        fallbackGroup.remove();
+      }
+
+      svg.appendChild(generatedGroup);
+
+      return true;
+    } catch (error) {
+      console.warn('서울 전체 행정동 지도를 불러오지 못했습니다.', error);
+      return false;
+    }
+  };
+
+  const extractHashtags = (caption) => {
+    if (!caption) return [];
+    try {
+      const matches = String(caption).match(/#[\p{L}\p{N}_-]+/gu) || [];
+      return matches.map((tag) => tag.replace(/^#/, '').toLowerCase());
+    } catch (error) {
+      const matches = String(caption).match(/#[A-Za-z0-9_-]+/g) || [];
+      return matches.map((tag) => tag.replace(/^#/, '').toLowerCase());
+    }
+  };
+
+  const hydrateInstagram = async () => {
+    try {
+      const response = await fetch('/api/instagram.json', { credentials: 'omit' });
+      if (!response.ok) return;
+      const payload = await response.json();
+      const posts = Array.isArray(payload?.posts) ? payload.posts : [];
+      if (!posts.length) return;
+
+      const latestBySlug = new Map();
+
+      posts.forEach((post) => {
+        const tags = Array.isArray(post.hashtags) && post.hashtags.length
+          ? post.hashtags
+          : extractHashtags(post.caption);
+        tags.forEach((tag) => {
+          if (!tag) return;
+          const key = String(tag).replace(/^#/, '').toLowerCase();
+          const entry = metaByHashtag.get(key) || metaByKey.get(key);
+          if (!entry) return;
+          const previous = latestBySlug.get(entry.slug);
+          const timestamp = new Date(post.timestamp || 0).getTime();
+          if (!previous || timestamp > previous.timestamp) {
+            latestBySlug.set(entry.slug, {
+              url: post.permalink || post.media_url || '',
+              timestamp,
+              caption: post.caption || ''
+            });
+          }
+        });
+      });
+
+      latestBySlug.forEach((post, slug) => {
+        if (!post.url) return;
+        const shape =
+          shapeRegistry.get(slug) ||
+          shapeRegistry.get(slug.replace(/-dong$/, '')) ||
+          null;
+        if (shape) {
+          shape.dataset.instagram = post.url;
+          shape.setAttribute('data-instagram', post.url);
+        }
+
+        const overlayLink = document.querySelector(`[data-dong-link="${slug}"]`);
+        if (overlayLink) {
+          overlayLink.dataset.instagram = post.url;
+          overlayLink.setAttribute('data-instagram', post.url);
+          overlayLink.setAttribute('title', `${overlayLink.textContent?.trim() || ''} · Instagram`);
+        }
+      });
+    } catch (error) {
+      console.warn('Instagram 자동 연동을 건너뜁니다.', error);
+    }
+  };
+
+  (async () => {
+    const loadedGeojson = await hydrateGeojson();
+    if (loadedGeojson) {
+      bindExistingShapes();
+    }
+    await hydrateInstagram();
+  })();
+</script>
+
+<style>
+  .map-viewport {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--nav-height, 72px) + 1.5rem) clamp(1.5rem, 6vw, 4rem) 4rem;
+    background: radial-gradient(circle at top, #edf2ff 0%, #d9e2ff 58%, #c2d4ff 100%);
+  }
+
+  .map-gradient {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 60%);
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .seoul-map {
+    position: relative;
+    width: min(920px, 88vw);
+    height: auto;
+    aspect-ratio: 1;
+    display: block;
+    filter: drop-shadow(0 28px 70px rgba(11, 31, 59, 0.18));
+    z-index: 1;
+  }
+
+  .dong-shape {
+    fill: rgba(11, 102, 255, 0.32);
+    stroke: rgba(11, 31, 59, 0.48);
+    stroke-width: 3;
+    transition: fill 0.35s ease, transform 0.35s ease, stroke 0.35s ease;
+    cursor: pointer;
+    filter: url(#map-shadow);
+  }
+
+  .dong-shape:hover,
+  .dong-shape:focus {
+    fill: rgba(11, 102, 255, 0.7);
+    stroke: rgba(11, 31, 59, 0.95);
+    transform: translateY(-6px) scale(1.01);
+    outline: none;
+  }
+
+  .dong-shape:focus-visible {
+    stroke-width: 4;
+  }
+
+  .map-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(11, 31, 59, 0.85);
+    color: #fff;
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    opacity: 0;
+    transform: translate3d(-50%, -120%, 0);
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    z-index: 3;
+  }
+
+  .map-tooltip.is-visible {
+    opacity: 1;
+  }
+
+  .map-overlay {
+    position: absolute;
+    top: calc(var(--nav-height, 72px) + 1.5rem);
+    left: clamp(1.5rem, 6vw, 4rem);
+    width: min(340px, 32vw);
+    display: grid;
+    gap: 1.5rem;
+    padding: 1.8rem;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(11, 31, 59, 0.08);
+    border-radius: 28px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 25px 60px rgba(11, 31, 59, 0.18);
+    z-index: 2;
+    color: rgba(11, 31, 59, 0.88);
+  }
+
+  .overlay-header {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.8rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(11, 31, 59, 0.55);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.1rem, 4vw, 2.6rem);
+    color: rgba(11, 31, 59, 0.92);
+  }
+
+  .overlay-copy {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: rgba(11, 31, 59, 0.7);
+  }
+
+  .overlay-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .overlay-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.4rem;
+    border-radius: 999px;
+    background: rgba(11, 102, 255, 0.9);
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .overlay-link:hover,
+  .overlay-link:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px rgba(11, 102, 255, 0.24);
+  }
+
+  .overlay-link--ghost {
+    background: rgba(255, 255, 255, 0.92);
+    color: rgba(11, 31, 59, 0.88);
+    border: 1px solid rgba(11, 31, 59, 0.12);
+  }
+
+  .overlay-dongs {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .overlay-dong a {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.9rem 1rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid rgba(11, 31, 59, 0.08);
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .overlay-dong a:hover,
+  .overlay-dong a:focus-visible {
+    border-color: rgba(11, 102, 255, 0.35);
+    transform: translateX(6px);
+    box-shadow: 0 14px 28px rgba(11, 102, 255, 0.18);
+  }
+
+  .dong-name {
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  .dong-meta {
+    font-size: 0.85rem;
+    color: rgba(11, 31, 59, 0.55);
+  }
+
+  @media (max-width: 1080px) {
+    .map-overlay {
+      width: min(360px, 42vw);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .map-viewport {
+      padding: calc(var(--nav-height, 72px) + 1rem) clamp(1.2rem, 5vw, 3rem) 3rem;
+    }
+
+    .map-overlay {
+      width: min(340px, 48vw);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .map-viewport {
+      flex-direction: column;
+      align-items: center;
+      padding: calc(var(--nav-height, 72px) + 1rem) clamp(1rem, 4vw, 2rem) 3rem;
+    }
+
+    .map-overlay {
+      position: static;
+      width: 100%;
+      margin-top: 1.5rem;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 26px;
+    }
+
+    .seoul-map {
+      width: min(560px, 100%);
+    }
+  }
+
+  @media (max-width: 520px) {
+    .overlay-actions {
+      flex-direction: column;
+    }
+
+    .overlay-link {
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dong-shape,
+    .overlay-link,
+    .overlay-dong a {
+      transition: none;
+    }
+
+    .dong-shape:hover,
+    .dong-shape:focus {
+      transform: none;
+    }
+  }
+</style>
