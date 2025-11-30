@@ -1,0 +1,120 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import seoulDongs from '../../data/seoul_dongs_merged.json';
+import { dongRecords } from '../../data/dongs';
+
+export function getStaticPaths() {
+  const dongs = seoulDongs.features;
+  return dongs.map((dong) => {
+    return {
+      params: { slug: dong.properties.slug },
+      props: { dong: dong.properties },
+    };
+  });
+}
+
+const { dong } = Astro.props;
+const { guName, dongName, slug } = dong;
+
+// Find associated record if exists
+const record = dongRecords.find(r => r.nameKo === dongName && r.district === guName) ||
+               dongRecords.find(r => r.nameKo.includes(dongName.replace('동', '')) && r.district === guName);
+
+const allDongs = seoulDongs.features.map(f => f.properties);
+const dongsInGu = allDongs.filter(d => d.guName === guName).sort((a, b) => a.dongName.localeCompare(b.dongName));
+const allDongsAlpha = [...allDongs].sort((a, b) => a.dongName.localeCompare(b.dongName));
+
+---
+
+<Layout title={`${dongName} - Seoul Sillok`}>
+  <div class="min-h-screen bg-zinc-900 text-white p-8 font-sans">
+    <nav class="mb-8 flex justify-between items-center">
+      <a href="/" class="text-2xl font-bold hover:text-gray-300 transition-colors">Seoul Sillok Map</a>
+      <a href="/about" class="text-gray-400 hover:text-white transition-colors">About</a>
+    </nav>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+      <div class="space-y-6">
+        <header>
+          <div class="text-sm text-gray-400 mb-2">{guName}</div>
+          <h1 class="text-5xl font-bold mb-4">{dongName}</h1>
+          {record && (
+            <p class="text-xl text-gray-300 leading-relaxed">{record.summary}</p>
+          )}
+        </header>
+
+        {record?.instagramUrl ? (
+           <div class="aspect-square w-full bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
+             <blockquote
+                class="instagram-media"
+                data-instgrm-permalink={record.instagramUrl}
+                data-instgrm-version="14"
+                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"
+             >
+             </blockquote>
+             <script async src="//www.instagram.com/embed.js"></script>
+           </div>
+        ) : (
+          <div class="aspect-video w-full bg-zinc-800 rounded-lg flex flex-col items-center justify-center text-gray-500 border border-zinc-700">
+            <span class="text-lg">No record yet for {dongName}</span>
+            <span class="text-sm mt-2">Check back later!</span>
+          </div>
+        )}
+      </div>
+
+      <div class="space-y-12">
+        <section>
+          <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Other Dongs in {guName}</h2>
+          <div class="flex flex-wrap gap-2">
+            {dongsInGu.map(d => (
+              <a
+                href={`/dong/${d.slug}`}
+                class={`px-3 py-1 rounded-full text-sm transition-colors ${d.slug === slug ? 'bg-white text-black' : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300'}`}
+              >
+                {d.dongName}
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">All Dongs</h2>
+          <div class="h-64 overflow-y-auto pr-2 custom-scrollbar">
+             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {allDongsAlpha.map(d => (
+                <a
+                  href={`/dong/${d.slug}`}
+                  class="text-sm text-gray-400 hover:text-white truncate block py-1"
+                >
+                  {d.dongName} <span class="text-xs text-zinc-600 ml-1">{d.guName}</span>
+                </a>
+              ))}
+             </div>
+          </div>
+        </section>
+
+        <div class="pt-8">
+            <a href="/" class="inline-flex items-center px-6 py-3 bg-white text-black rounded-full hover:bg-gray-200 transition-colors font-medium">
+                ← Back to Map
+            </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #27272a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #52525b;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #71717a;
+    }
+  </style>
+</Layout>
