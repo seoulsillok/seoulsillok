@@ -2,6 +2,48 @@
 import Layout from '../../layouts/Layout.astro';
 import { findDongBySlug, getDistrictByCode, ALL_DONGS, SOCIAL_LINKS } from '../../data/seoul';
 
+type InstagramPost = {
+  title: string;
+  url: string;
+  caption: string;
+};
+
+const INSTAGRAM_POSTS: Record<string, InstagramPost> = {
+  'songpa-3': {
+    title: '풍납동 산책로',
+    url: SOCIAL_LINKS.instagram,
+    caption: `풍납동 산책로
+
+1. 태백식당 (점심)
+2. 두부부 (베이커리)
+3. 인트로 베이커리 (베이커리)
+4. 풍납백제 문화공원 (산책)
+5. 광나루 한강공원 (산책)
+6. 유천냉면 (저녁)
+
+머물 곳 잃은 마음은
+정처 없이 계절을 헤매이고
+흩어지는 찰나의 순간들을
+두 눈 가득히 꾹꾹 눌러 담네
+
+Pungnap-dong Walk Route
+
+1. TaeBaek Restaurant (Lunch)
+2. Dobubu (Bakery)
+3. Intro Bakery (Bakery)
+4. Pungnap Baekje Cultural Park (Walk)
+5. Gwangnaru Hangang Park (Walk)
+6. Yucheon Naengmyeon (Dinner)
+
+A heart with nowhere to rest
+Wanders aimlessly through the seasons
+Those scattering, fleeting moments
+I fill my eyes, pressing them deep inside
+
+#서울 #풍납동 #풍납동맛집 #풍납동맛집추천 #풍납동카페 #풍납동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Pungnap_dong`
+  }
+};
+
 export async function getStaticPaths() {
   return ALL_DONGS.map((entry) => ({ params: { dong: entry.slug } }));
 }
@@ -10,13 +52,13 @@ const slug = String(Astro.params.dong || '');
 const record = findDongBySlug(slug);
 const district = record ? getDistrictByCode(record.districtCode) : undefined;
 
-const query = record ? `${record.nameKo} ${record.districtKo}` : '서울 동네';
-const youtubeSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-const tiktokSearch = `https://www.tiktok.com/search?q=${encodeURIComponent(query)}`;
-const soundcloudSearch = `https://soundcloud.com/search?q=${encodeURIComponent(query)}`;
-const instagramTag = record
-  ? `https://www.instagram.com/explore/tags/${encodeURIComponent(record.nameKo.replace('동', ''))}/`
-  : SOCIAL_LINKS.instagram;
+const instagramPost = record
+  ? INSTAGRAM_POSTS[record.slug] ?? {
+      title: `${record.nameKo} 기록`,
+      url: SOCIAL_LINKS.instagram,
+      caption: `${record.nameKo} 관련 포스트는 서울실록 인스타그램 프로필에서 확인해 주세요.`
+    }
+  : null;
 ---
 
 <Layout title={record ? `${record.nameKo} 기록` : '동네 기록'} description="서울 동네 기록 상세 페이지">
@@ -26,28 +68,20 @@ const instagramTag = record
       <h1>{record.nameKo}</h1>
       <p class="meta">{record.districtKo} · slug: {record.slug}</p>
       <p class="summary">
-        이 페이지는 {record.nameKo} 기록을 모으기 위한 기본 아카이브입니다.
-        서울 실록 채널 또는 검색 링크를 통해 관련 기록을 이어서 확인하세요.
+        이 페이지는 Instagram 중심 아카이브입니다. 아래 카드에서 포스트 내용을 확인하고
+        서울실록 인스타그램 프로필로 이동해 해당 포스팅을 확인하세요.
       </p>
 
-      <section class="channel-grid" aria-label="채널 링크">
-        <a href={instagramTag} target="_blank" rel="noreferrer">
-          <small>Instagram</small>
-          <strong>{record.nameKo} 태그 열기</strong>
-        </a>
-        <a href={youtubeSearch} target="_blank" rel="noreferrer">
-          <small>YouTube</small>
-          <strong>{record.nameKo} 검색</strong>
-        </a>
-        <a href={tiktokSearch} target="_blank" rel="noreferrer">
-          <small>TikTok</small>
-          <strong>{record.nameKo} 검색</strong>
-        </a>
-        <a href={soundcloudSearch} target="_blank" rel="noreferrer">
-          <small>SoundCloud</small>
-          <strong>{record.nameKo} 검색</strong>
-        </a>
-      </section>
+      {instagramPost ? (
+        <section class="instagram-post" aria-label="인스타그램 포스트">
+          <header>
+            <small>Instagram Post</small>
+            <h2>{instagramPost.title}</h2>
+          </header>
+          <pre>{instagramPost.caption}</pre>
+          <a href={instagramPost.url} target="_blank" rel="noreferrer">@seoulsillok 포스트 보러 가기</a>
+        </section>
+      ) : null}
 
       <section class="actions">
         <a href={`/dong?district=${record.districtCode}`}>← {record.districtKo} 목록으로</a>
@@ -115,30 +149,41 @@ const instagramTag = record
     line-height: 1.7;
   }
 
-  .channel-grid {
+  .instagram-post {
     margin-top: 1.1rem;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.7rem;
-  }
-
-  .channel-grid a {
     border: 1px solid rgba(247, 225, 198, 0.2);
     border-radius: 15px;
-    padding: 0.9rem;
-    text-decoration: none;
-    color: var(--text);
+    padding: 1rem;
     background: rgba(255, 250, 244, 0.02);
   }
 
-  .channel-grid small {
-    display: block;
+  .instagram-post header small {
     color: var(--accent-soft);
   }
 
-  .channel-grid strong {
-    display: block;
-    margin-top: 0.3rem;
+  .instagram-post h2 {
+    margin: 0.35rem 0 0;
+    font-size: 1.15rem;
+  }
+
+  .instagram-post pre {
+    margin: 0.9rem 0;
+    white-space: pre-wrap;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--text);
+    line-height: 1.68;
+    font-size: 0.92rem;
+  }
+
+  .instagram-post a {
+    display: inline-block;
+    text-decoration: none;
+    color: #180d06;
+    font-weight: 700;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fac89f, #f58f56);
+    padding: 0.46rem 0.84rem;
+    font-size: 0.82rem;
   }
 
   .actions {
@@ -164,7 +209,7 @@ const instagramTag = record
     padding-top: 1rem;
   }
 
-  h2 {
+  .related h2 {
     margin: 0;
     font-size: 1.1rem;
   }
@@ -192,11 +237,5 @@ const instagramTag = record
     background: linear-gradient(125deg, #ffd0a8, #f58a4e);
     border-color: rgba(255, 205, 163, 0.82);
     font-weight: 700;
-  }
-
-  @media (max-width: 700px) {
-    .channel-grid {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

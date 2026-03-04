@@ -9,10 +9,7 @@ export type SeoulDistrict = {
 };
 
 export const SOCIAL_LINKS = {
-  instagram: 'https://instagram.com/seoulsillok',
-  youtube: 'https://youtube.com/@seoulsillok',
-  tiktok: 'https://tiktok.com/@seoulsillok',
-  soundcloud: 'https://soundcloud.com/seoulsillok'
+  instagram: 'https://www.instagram.com/seoulsillok/'
 };
 
 export const DISTRICTS: SeoulDistrict[] = [
