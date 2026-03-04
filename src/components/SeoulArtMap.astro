@@ -94,7 +94,7 @@ const districtPayload = districts.map((district) => ({
           item.style.top = `${y}%`;
 
           const link = document.createElement('a');
-          const hasPostPermalink = /instagram\\.com\\/(p|reel)\\//.test(dong.postUrl || '');
+          const hasPostPermalink = /instagram\.com\/(p|reel)\//.test(dong.postUrl || '');
           link.href = hasPostPermalink ? dong.postUrl : `/dong/${dong.slug}`;
           link.textContent = dong.nameKo;
           link.title = hasPostPermalink ? `${dong.nameKo} 포스트 보기` : `${dong.nameKo} 기록 보기`;
