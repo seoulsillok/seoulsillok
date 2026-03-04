@@ -1,5 +1,6 @@
 ---
 import type { SeoulDistrict } from '../data/seoul';
+import { INSTAGRAM_POSTS_BY_DONG } from '../data/instagram-posts.generated';
 
 interface Props {
   districts: SeoulDistrict[];
@@ -14,7 +15,11 @@ const districtPayload = districts.map((district) => ({
   nameKo: district.nameKo,
   x: district.map.x,
   y: district.map.y,
-  dongs: district.dongs
+  dongs: district.dongs.map((dong, index) => ({
+    nameKo: dong,
+    slug: `${district.code}-${index + 1}`,
+    postUrl: INSTAGRAM_POSTS_BY_DONG[dong]?.url || ''
+  }))
 }));
 ---
 
@@ -76,10 +81,10 @@ const districtPayload = districts.map((district) => ({
 
         const total = district.dongs.length;
         district.dongs.forEach((dong, index) => {
-          const angle = (Math.PI * 2 * index) / total;
-          const ring = Math.floor(index / 8);
-          const radiusX = 2.8 + ring * 2.1;
-          const radiusY = 2.2 + ring * 1.65;
+          const ring = Math.floor(index / 6);
+          const angle = ((Math.PI * 2) / 6) * (index % 6) + ring * 0.35;
+          const radiusX = 1.45 + ring * 1.35;
+          const radiusY = 1.15 + ring * 1.1;
 
           const x = clamp(district.x + Math.cos(angle) * radiusX, 4, 96);
           const y = clamp(district.y + Math.sin(angle) * radiusY, 5, 95);
@@ -89,9 +94,14 @@ const districtPayload = districts.map((district) => ({
           item.style.top = `${y}%`;
 
           const link = document.createElement('a');
-          link.href = `/dong/${district.code}-${index + 1}`;
-          link.textContent = dong;
-          link.title = `${dong} 기록 보기`;
+          const hasPostPermalink = /instagram\\.com\\/(p|reel)\\//.test(dong.postUrl || '');
+          link.href = hasPostPermalink ? dong.postUrl : `/dong/${dong.slug}`;
+          link.textContent = dong.nameKo;
+          link.title = hasPostPermalink ? `${dong.nameKo} 포스트 보기` : `${dong.nameKo} 기록 보기`;
+          if (hasPostPermalink) {
+            link.target = '_blank';
+            link.rel = 'noreferrer';
+          }
 
           item.appendChild(link);
           dongLayer.appendChild(item);
@@ -109,6 +119,7 @@ const districtPayload = districts.map((district) => ({
 
         if (!selected) {
           frame.classList.remove('is-zoomed');
+          frame.classList.remove('has-dongs');
           frame.style.setProperty('--focus-x', '50%');
           frame.style.setProperty('--focus-y', '50%');
           if (dongLayer) dongLayer.innerHTML = '';
@@ -117,10 +128,11 @@ const districtPayload = districts.map((district) => ({
           return;
         }
 
-        frame.classList.add('is-zoomed');
         frame.style.setProperty('--focus-x', `${selected.x}%`);
         frame.style.setProperty('--focus-y', `${selected.y}%`);
+        requestAnimationFrame(() => frame.classList.add('is-zoomed'));
         buildDongMarkers(selected);
+        frame.classList.add('has-dongs');
 
         window.dispatchEvent(new CustomEvent('district-change', { detail: { code: selected.code } }));
         history.replaceState(null, '', `/dong#district-${selected.code}`);
@@ -164,7 +176,7 @@ const districtPayload = districts.map((district) => ({
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform 0.45s ease;
+    transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform-origin 0.75s cubic-bezier(0.22, 1, 0.36, 1);
     transform-origin: var(--focus-x) var(--focus-y);
   }
 
@@ -180,6 +192,19 @@ const districtPayload = districts.map((district) => ({
     position: absolute;
     inset: 0;
     z-index: 2;
+  }
+
+  .dong-layer {
+    opacity: 0;
+    transition: opacity 0.28s ease;
+  }
+
+  .map-frame.has-dongs .dong-layer {
+    opacity: 1;
+  }
+
+  .dong-layer li {
+    animation: dong-in 0.22s ease both;
   }
 
   .district-layer li,
@@ -257,6 +282,17 @@ const districtPayload = districts.map((district) => ({
     .dong-layer a {
       font-size: 0.5rem;
       padding: 0.16rem 0.26rem;
+    }
+  }
+
+  @keyframes dong-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -45%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
     }
   }
 </style>
