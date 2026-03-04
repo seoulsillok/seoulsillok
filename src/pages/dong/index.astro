@@ -1,143 +1,198 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import SeoulArtMap from '../../components/SeoulArtMap.astro';
+import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
 
-const districts = [
-    {
-        name: "강남구",
-        dongs: ["논현동", "삼성동", "청담동", "압구정동"]
-    },
-    {
-        name: "마포구",
-        dongs: ["합정동", "망원동", "연남동", "상수동"]
-    },
-    // 나머지 구와 동은 필요에 따라 추가
-];
+const selectedDistrict = Astro.url.searchParams.get('district') || '';
+const filteredDistricts = selectedDistrict
+  ? DISTRICTS.filter((district) => district.code === selectedDistrict)
+  : DISTRICTS;
 
-function slugify(s: string) {
-    return s
-        .toString()
-        .normalize('NFKD')
-        .replace(/[\u0300-\u036F]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9가-힣\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-');
-}
+const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + district.dongs.length, 0);
 ---
 
-<Layout title="동네 기록 - Seoul Sillok">
-    <div class="dong-container">
-        <h1>서울 동네 기록</h1>
-        <p class="subtitle kr">각 동네의 SNS 포스트를 확인해보세요</p>
-        <p class="subtitle en">Neighborhood records of Seoul — check SNS posts for each area</p>
+<Layout title="서울 동네 아카이브" description="서울 25개 구 동네 목록과 지도 탐색">
+  <section class="intro">
+    <p class="eyebrow">SEOUL DONG DIRECTORY</p>
+    <h1>서울 동네 기록</h1>
+    <p>
+      현재 {DISTRICTS.length}개 구, {ALL_DONGS.length}개 동네를 정리했습니다.
+      {selectedDistrict ? ` 선택된 ${filteredDistricts[0]?.nameKo || ''}의 동네를 보고 있습니다.` : ' 구를 선택해 세부 동네를 빠르게 탐색할 수 있습니다.'}
+    </p>
+  </section>
 
-        <div class="districts">
-            {districts.map(district => (
-                <section class="district">
-                    <h2>{district.name}</h2>
-                    <div class="dongs">
-                        {district.dongs.map(dong => {
-                            const s = slugify(dong);
-                            return (
-                                <a class="dong-card" href={`/dong/${s}`}>
-                                    <h3>{dong}</h3>
-                                    <div class="social-icons">
-                                        <img src="/images/instagram.svg" alt="instagram" />
-                                        <img src="/images/youtube.svg" alt="youtube" />
-                                        <img src="/images/tiktok.svg" alt="tiktok" />
-                                        <img src="/images/soundcloud.svg" alt="soundcloud" />
-                                    </div>
-                                </a>
-                            );
-                        })}
-                    </div>
-                </section>
-            ))}
-        </div>
-    </div>
+  <section class="map-area">
+    <SeoulArtMap districts={DISTRICTS} selectedDistrict={selectedDistrict} />
+  </section>
+
+  <section class="filters">
+    <a class:list={[{ active: selectedDistrict === '' }]} href="/dong">전체 ({ALL_DONGS.length})</a>
+    {DISTRICTS.map((district) => (
+      <a
+        href={`/dong?district=${encodeURIComponent(district.code)}`}
+        class:list={[{ active: selectedDistrict === district.code }]}
+      >
+        {district.nameKo} ({district.dongs.length})
+      </a>
+    ))}
+  </section>
+
+  <section class="district-grid">
+    <p class="count">현재 표시 중: {visibleDongCount}개 동네</p>
+    {filteredDistricts.map((district) => (
+      <article class="district-card" id={district.code}>
+        <header>
+          <h2>{district.nameKo}</h2>
+          <small>{district.dongs.length}개 동네</small>
+        </header>
+        <ul>
+          {district.dongs.map((dong, index) => (
+            <li>
+              <a href={`/dong/${district.code}-${index + 1}`}>
+                <strong>{dong}</strong>
+                <span>기록 보러가기</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </article>
+    ))}
+  </section>
 </Layout>
 
 <style>
-    .dong-container {
-        padding: 2rem 0;
-    }
+  .intro {
+    margin-top: 0.3rem;
+  }
 
-    h1 {
-        text-align: center;
-        color: var(--primary-color);
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-    }
+  .eyebrow {
+    margin: 0;
+    letter-spacing: 0.14em;
+    color: var(--accent-soft);
+    font-weight: 700;
+    font-size: 0.74rem;
+  }
 
-    .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 3rem;
-    }
+  h1 {
+    margin: 0.8rem 0 0.5rem;
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 3.3vw, 3.1rem);
+  }
 
-    .districts {
-        display: flex;
-        flex-direction: column;
-        gap: 3rem;
-    }
+  .intro p {
+    color: var(--muted);
+    max-width: 760px;
+    line-height: 1.65;
+  }
 
-    .district {
-        background: #f8f8f8;
-        padding: 2rem;
-        border-radius: 16px;
-    }
+  .map-area {
+    margin-top: 1rem;
+  }
 
-    .district h2 {
-        margin-bottom: 1.5rem;
-        color: var(--text-color);
-    }
+  .filters {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 
-    .dongs {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.5rem;
-    }
+  .filters a {
+    text-decoration: none;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.38rem 0.72rem;
+    font-size: 0.78rem;
+    background: rgba(255, 251, 244, 0.02);
+  }
 
-    .dong-card {
-        display: block;
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        color: inherit;
-        text-decoration: none;
-    }
+  .filters a.active {
+    color: #1f1206;
+    background: linear-gradient(145deg, #f9c296, #f57c3d);
+    border-color: rgba(255, 204, 158, 0.7);
+    font-weight: 700;
+  }
 
-    .dong-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 8px 20px rgba(11,102,255,0.06);
-    }
+  .district-grid {
+    margin-top: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
 
-    .dong-card h3 {
-        margin: 0 0 1rem 0;
-        color: var(--text-color);
-    }
+  .count {
+    margin: 0;
+    grid-column: 1 / -1;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
 
-    .social-icons {
-        display: flex;
-        gap: 0.6rem;
-    }
+  .district-card {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 1rem;
+    background: linear-gradient(150deg, rgba(43, 31, 22, 0.82), rgba(20, 16, 12, 0.84));
+  }
 
-    .social-icons img {
-        width: 26px;
-        height: 26px;
-        opacity: 0.95;
-    }
+  .district-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
 
-    @media (max-width: 768px) {
-        .dongs {
-            grid-template-columns: 1fr;
-        }
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
 
-        .district {
-            padding: 1.5rem;
-        }
+  header small {
+    color: var(--accent-soft);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  li a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(245, 226, 198, 0.14);
+    border-radius: 11px;
+    text-decoration: none;
+    padding: 0.5rem 0.58rem;
+    color: var(--text);
+    font-size: 0.85rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  li a:hover {
+    border-color: rgba(248, 186, 138, 0.7);
+    transform: translateY(-1px);
+  }
+
+  li span {
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+
+  @media (max-width: 960px) {
+    .district-grid {
+      grid-template-columns: 1fr;
     }
+  }
+
+  @media (max-width: 640px) {
+    ul {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

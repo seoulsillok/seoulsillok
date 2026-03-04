@@ -1,183 +1,196 @@
 ---
+import { SOCIAL_LINKS } from '../data/seoul';
+
 interface Props {
-	title?: string;
+  title?: string;
+  description?: string;
 }
 
-const { title = "Seoul Sillok" } = Astro.props;
+const {
+  title = 'Seoul Sillok',
+  description = '서울의 동네를 감각적으로 기록하는 아카이브 플랫폼'
+} = Astro.props;
 ---
 
 <!doctype html>
 <html lang="ko">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title} - 서울 실록 / Seoul Sillok</title>
-		<meta name="description" content="서울의 미래를 기록합니다 — Documenting future memories of Seoul" />
-		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-	</head>
-	<body>
-		<!-- Top banner removed for minimal layout -->
-		<main>
-			<slot />
-		</main>
-		<footer>
-			<p>&copy; {new Date().getFullYear()} Seoul Sillok. 서울 실록. All rights reserved.</p>
-			<p class="footer-en">Documenting future memories of Seoul</p>
-			<div class="social-footer">
-				<a href="https://instagram.com/seoulsillok" target="_blank" title="Instagram">
-					<img src="/images/instagram.svg" alt="Instagram" />
-				</a>
-				<a href="https://youtube.com/@seoulsillok" target="_blank" title="YouTube">
-					<img src="/images/youtube.svg" alt="YouTube" />
-				</a>
-				<a href="https://tiktok.com/@seoulsillok" target="_blank" title="TikTok">
-					<img src="/images/tiktok.svg" alt="TikTok" />
-				</a>
-				<a href="https://soundcloud.com/seoulsillok" target="_blank" title="SoundCloud">
-					<img src="/images/soundcloud.svg" alt="SoundCloud" />
-				</a>
-			</div>
-		</footer>
-	</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title} | 서울 실록</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <header>
+      <div class="header-inner">
+        <a href="/" class="logo">
+          <span class="logo-mark">SS</span>
+          <span>Seoul Sillok</span>
+        </a>
+        <nav>
+          <a href="/">홈</a>
+          <a href="/dong">서울 동네</a>
+          <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a>
+          <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noreferrer">YouTube</a>
+          <a href={SOCIAL_LINKS.tiktok} target="_blank" rel="noreferrer">TikTok</a>
+          <a href={SOCIAL_LINKS.soundcloud} target="_blank" rel="noreferrer">SoundCloud</a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer>
+      <p>서울 실록 Seoul Sillok</p>
+      <small>&copy; {new Date().getFullYear()} All rights reserved.</small>
+    </footer>
+  </body>
 </html>
 
 <style>
-	:root {
-		--primary-color: #0b66ff; /* 청색 계열 */
-		--text-color: #0b66ff; /* 폰트 색을 푸른색으로 통일 */
-		--background-color: #fff;
-	}
+  :root {
+    --bg: #15120e;
+    --panel: #211a13;
+    --surface: #2a2219;
+    --text: #f7efe2;
+    --muted: #ccbca6;
+    --accent: #f57c3d;
+    --accent-soft: #ffb37c;
+    --line: rgba(244, 225, 198, 0.2);
+  }
 
-	/* small icon link styles */
-.icon-link img {
-	width: 22px;
-	height: 22px;
-	display: block;
-	opacity: 0.9;
-}
+  * {
+    box-sizing: border-box;
+  }
 
-.icon-link {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 36px;
-	height: 36px;
-	border-radius: 8px;
-	transition: background-color 0.15s ease, opacity 0.15s ease;
-}
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at 10% -10%, #453423 0%, transparent 46%),
+      radial-gradient(circle at 90% 0%, #2f4731 0%, transparent 43%),
+      linear-gradient(170deg, #17130f 0%, #0f0d0b 100%);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+  }
 
-.icon-link:hover {
-	opacity: 1;
-	background: rgba(11,102,255,0.06);
-}
+  .grain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.2;
+    background-image: radial-gradient(rgba(255, 246, 232, 0.2) 0.3px, transparent 0.3px);
+    background-size: 3px 3px;
+  }
 
-	html, body {
-		margin: 0;
-		padding: 0;
-		font-family: 'Noto Sans KR', sans-serif;
-		color: var(--text-color);
-		background-color: var(--background-color);
-	}
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(12px);
+    background: rgba(15, 12, 9, 0.82);
+    border-bottom: 1px solid var(--line);
+  }
 
-	nav {
-		background-color: var(--background-color);
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-		position: fixed;
-		width: 100%;
-		top: 0;
-		z-index: 1000;
-	}
+  .header-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0.95rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
 
-	.nav-content {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 1rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
+  .logo {
+    color: var(--text);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: 'Fraunces', serif;
+    font-size: 1.14rem;
+    letter-spacing: 0.02em;
+  }
 
-	.logo {
-		font-size: 1.5rem;
-		font-weight: bold;
-		color: var(--primary-color);
-		text-decoration: none;
-	}
+  .logo-mark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 1px solid rgba(245, 124, 61, 0.68);
+    display: grid;
+    place-items: center;
+    background: rgba(245, 124, 61, 0.12);
+    color: var(--accent-soft);
+    font-size: 0.8rem;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
 
-	.nav-links {
-		display: flex;
-		gap: 2rem;
-	}
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 0.92rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 
-	.nav-links a {
-		color: var(--text-color);
-		text-decoration: none;
-		transition: color 0.3s ease;
-	}
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.89rem;
+    transition: color 0.2s ease;
+  }
 
-	.nav-links a:hover {
-		color: var(--primary-color);
-	}
+  nav a:hover {
+    color: var(--accent-soft);
+  }
 
-	:root {
-		--primary-color: #0b66ff; /* 청색 계열 */
-		--text-color: #0b66ff; /* 폰트 색을 푸른색으로 통일 */
-		--background-color: #fff;
-		--footer-height: 120px;
-	}
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+  }
 
-	main {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 0;
-		min-height: calc(100vh - var(--footer-height));
-		display: block;
-	}
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 1.8rem 1rem 2.2rem;
+    text-align: center;
+    color: var(--muted);
+    background: rgba(9, 8, 7, 0.62);
+  }
 
-	footer {
-		text-align: center;
-		padding: 1rem 1.5rem;
-		background-color: #f5f5f5;
-		height: var(--footer-height);
-		box-sizing: border-box;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		gap: 0.5rem;
-	}
+  footer p {
+    margin: 0;
+    font-family: 'Fraunces', serif;
+    letter-spacing: 0.04em;
+  }
 
-	.social-footer {
-		display: flex;
-		gap: 0.75rem;
-		justify-content: center;
-		align-items: center;
-	}
+  footer small {
+    display: block;
+    margin-top: 0.35rem;
+  }
 
-	.social-footer a {
-		display: inline-flex;
-		width: 36px;
-		height: 36px;
-		align-items: center;
-		justify-content: center;
-		border-radius: 8px;
-		background: transparent;
-		text-decoration: none;
-	}
+  @media (max-width: 840px) {
+    .header-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
 
-	.social-footer img { width:22px; height:22px; }
+    nav {
+      width: 100%;
+      justify-content: flex-start;
+    }
 
-	@media (max-width: 768px) {
-		.nav-content {
-			flex-direction: column;
-			gap: 1rem;
-		}
-
-		.nav-links {
-			flex-direction: column;
-			align-items: center;
-			gap: 1rem;
-		}
-	}
+    main {
+      padding-top: 1.8rem;
+    }
+  }
 </style>

@@ -1,119 +1,202 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { findDongBySlug, getDistrictByCode, ALL_DONGS, SOCIAL_LINKS } from '../../data/seoul';
 
-// 간단한 샘플 데이터: 실제 포스트 ID/URL은 필요에 따라 채워주세요
-const data: Record<string, { title: string; instagram: string; youtube: string; soundcloud: string }> = {
-  'nonhyeon-dong': {
-    title: '논현동 기록',
-    instagram: 'https://www.instagram.com/p/Ck-example/',
-    youtube: 'dQw4w9WgXcQ',
-    soundcloud: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/293'
-  },
-  'hapjeong-dong': {
-    title: '합정동 기록',
-    instagram: 'https://www.instagram.com/p/Ck-example-2/',
-    youtube: '3JZ_D3ELwOQ',
-    soundcloud: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/294'
-  },
-  'ikseon-dong': {
-    title: '익선동 기록',
-    instagram: '',
-    youtube: '2Vv-BfVoq4g',
-    soundcloud: ''
-  }
-};
-
-// Return explicit paths so build won't depend on runtime ordering of module initialization
 export async function getStaticPaths() {
-  return [
-    { params: { dong: 'nonhyeon-dong' } },
-    { params: { dong: 'hapjeong-dong' } },
-    { params: { dong: 'ikseon-dong' } },
-  ];
+  return ALL_DONGS.map((entry) => ({ params: { dong: entry.slug } }));
 }
 
-const dong = String(Astro.params.dong || '');
-const entry = (data as any)[dong] || null;
+const slug = String(Astro.params.dong || '');
+const record = findDongBySlug(slug);
+const district = record ? getDistrictByCode(record.districtCode) : undefined;
+
+const query = record ? `${record.nameKo} ${record.districtKo}` : '서울 동네';
+const youtubeSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+const tiktokSearch = `https://www.tiktok.com/search?q=${encodeURIComponent(query)}`;
+const soundcloudSearch = `https://soundcloud.com/search?q=${encodeURIComponent(query)}`;
+const instagramTag = record
+  ? `https://www.instagram.com/explore/tags/${encodeURIComponent(record.nameKo.replace('동', ''))}/`
+  : SOCIAL_LINKS.instagram;
 ---
 
-<Layout title={entry ? entry.title : '동네 기록'}>
-  <article>
-    <h1>{entry ? entry.title : '동네 기록'}</h1>
-    <p class="en">Documenting future memories of Seoul — neighborhood record</p>
+<Layout title={record ? `${record.nameKo} 기록` : '동네 기록'} description="서울 동네 기록 상세 페이지">
+  {record ? (
+    <article class="detail">
+      <p class="eyebrow">SEOUL MEMORY SHEET</p>
+      <h1>{record.nameKo}</h1>
+      <p class="meta">{record.districtKo} · slug: {record.slug}</p>
+      <p class="summary">
+        이 페이지는 {record.nameKo} 기록을 모으기 위한 기본 아카이브입니다.
+        서울 실록 채널 또는 검색 링크를 통해 관련 기록을 이어서 확인하세요.
+      </p>
 
-    {entry ? (
-      <div class="embeds">
-        {entry.instagram ? (
-          <section class="embed instagram">
-            <h2 class="visually-hidden">Instagram</h2>
-            <!-- Instagram embed (샘플). 실제 작동을 위해선 Instagram의 임베드 스크립트와 실제 URL 필요 -->
-            <blockquote class="instagram-media" data-instgrm-permalink={entry.instagram} data-instgrm-version="14"></blockquote>
-            <script async src="//www.instagram.com/embed.js"></script>
-          </section>
-        ) : null}
+      <section class="channel-grid" aria-label="채널 링크">
+        <a href={instagramTag} target="_blank" rel="noreferrer">
+          <small>Instagram</small>
+          <strong>{record.nameKo} 태그 열기</strong>
+        </a>
+        <a href={youtubeSearch} target="_blank" rel="noreferrer">
+          <small>YouTube</small>
+          <strong>{record.nameKo} 검색</strong>
+        </a>
+        <a href={tiktokSearch} target="_blank" rel="noreferrer">
+          <small>TikTok</small>
+          <strong>{record.nameKo} 검색</strong>
+        </a>
+        <a href={soundcloudSearch} target="_blank" rel="noreferrer">
+          <small>SoundCloud</small>
+          <strong>{record.nameKo} 검색</strong>
+        </a>
+      </section>
 
-        {entry.youtube ? (
-          <section class="embed youtube">
-            <h2 class="visually-hidden">YouTube</h2>
-            <div class="video">
-              <iframe width="560" height="315" src={`https://www.youtube.com/embed/${entry.youtube}`} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-          </section>
-        ) : null}
+      <section class="actions">
+        <a href={`/dong?district=${record.districtCode}`}>← {record.districtKo} 목록으로</a>
+        <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">서울실록 인스타그램</a>
+      </section>
 
-        {entry.soundcloud ? (
-          <section class="embed soundcloud">
-            <h2 class="visually-hidden">SoundCloud</h2>
-            <iframe width="100%" height="166" scrolling="no" frameborder="no" src={entry.soundcloud}></iframe>
-          </section>
-        ) : null}
-      </div>
-    ) : (
-      <p>해당 동네의 기록이 없습니다. 다른 동네를 선택해 주세요.</p>
-    )}
-
-  </article>
+      {district ? (
+        <section class="related">
+          <h2>{record.districtKo}의 다른 동네</h2>
+          <ul>
+            {district.dongs.map((dong, index) => (
+              <li>
+                <a href={`/dong/${district.code}-${index + 1}`} class:list={[{ active: dong === record.nameKo }]}>{dong}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </article>
+  ) : (
+    <article class="detail">
+      <h1>존재하지 않는 동네 페이지입니다.</h1>
+      <p class="summary">요청한 경로를 찾을 수 없습니다. 동네 목록으로 이동해 주세요.</p>
+      <section class="actions">
+        <a href="/dong">서울 동네 목록으로 이동</a>
+      </section>
+    </article>
+  )}
 </Layout>
 
 <style>
-  article {
-    padding: 2rem 0;
+  .detail {
+    max-width: 860px;
+    margin: 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 1.4rem;
+    background: linear-gradient(160deg, rgba(50, 37, 25, 0.78), rgba(16, 12, 8, 0.9));
+    box-shadow: 0 26px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .eyebrow {
+    margin: 0;
+    color: var(--accent-soft);
+    letter-spacing: 0.12em;
+    font-size: 0.74rem;
+    font-weight: 700;
   }
 
   h1 {
-    color: var(--text-color);
-    font-size: 2rem;
-    margin-bottom: 1rem;
+    margin: 0.8rem 0 0;
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
   }
 
-  .embeds {
+  .meta {
+    color: var(--muted);
+    margin: 0.45rem 0 1rem;
+    font-size: 0.9rem;
+  }
+
+  .summary {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .channel-grid {
+    margin-top: 1.1rem;
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
   }
 
-  .video iframe {
-    width: 100%;
-    height: 480px;
-    border-radius: 8px;
-    border: 0;
+  .channel-grid a {
+    border: 1px solid rgba(247, 225, 198, 0.2);
+    border-radius: 15px;
+    padding: 0.9rem;
+    text-decoration: none;
+    color: var(--text);
+    background: rgba(255, 250, 244, 0.02);
   }
 
-  .instagram blockquote {
-    max-width: 540px;
-    margin: 0 auto;
+  .channel-grid small {
+    display: block;
+    color: var(--accent-soft);
   }
 
-  .soundcloud iframe {
-    border-radius: 8px;
-    border: 0;
+  .channel-grid strong {
+    display: block;
+    margin-top: 0.3rem;
   }
 
-  .visually-hidden {
-    position: absolute !important;
-    height: 1px; width: 1px;
-    overflow: hidden;
-    clip: rect(1px, 1px, 1px, 1px);
-    white-space: nowrap;
+  .actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
+
+  .actions a {
+    text-decoration: none;
+    color: #180d06;
+    font-weight: 700;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fac89f, #f58f56);
+    padding: 0.46rem 0.84rem;
+    font-size: 0.82rem;
+  }
+
+  .related {
+    margin-top: 1.35rem;
+    border-top: 1px solid var(--line);
+    padding-top: 1rem;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .related ul {
+    margin: 0.7rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .related a {
+    text-decoration: none;
+    color: var(--muted);
+    border: 1px solid rgba(247, 225, 198, 0.2);
+    border-radius: 999px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .related a.active {
+    color: #1c1008;
+    background: linear-gradient(125deg, #ffd0a8, #f58a4e);
+    border-color: rgba(255, 205, 163, 0.82);
+    font-weight: 700;
+  }
+
+  @media (max-width: 700px) {
+    .channel-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
