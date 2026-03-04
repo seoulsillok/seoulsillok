@@ -3,42 +3,42 @@ import Layout from '../layouts/Layout.astro';
 import SeoulArtMap from '../components/SeoulArtMap.astro';
 import { ALL_DONGS, DISTRICTS, SOCIAL_LINKS } from '../data/seoul';
 
-const featured = ALL_DONGS.slice(0, 12);
+const featured = ALL_DONGS.slice(0, 9);
 ---
 
 <Layout title="서울 실록" description="서울 전체 동네를 감각적으로 기록하는 아카이브">
   <section class="hero">
-    <p class="eyebrow">ARTISTIC SEOUL ARCHIVE</p>
-    <h1>도시의 결을 모으다,<br />서울 실록</h1>
+    <p class="eyebrow">SEOUL ARCHIVE</p>
+    <h1>서울의 동네를<br />미니멀하게 기록합니다</h1>
     <p class="lead">
-      서울 25개 구, {ALL_DONGS.length}개 동네를 지금부터 하나씩 기록합니다.
-      지도에서 구를 선택하고, 동네별 페이지에서 채널 기록을 모아보세요.
+      Instagram 포스트를 기반으로 동네 페이지와 연결합니다.
+      구를 선택하고, 연결된 동네 포스트를 바로 확인하세요.
     </p>
     <div class="hero-cta">
-      <a href="/dong" class="btn primary">전체 동네 보기</a>
-      <a href={SOCIAL_LINKS.instagram} class="btn ghost" target="_blank" rel="noreferrer">Instagram 아카이브</a>
+      <a href="/dong" class="btn dark">지도에서 탐색하기</a>
+      <a href={SOCIAL_LINKS.instagram} class="btn light" target="_blank" rel="noreferrer">@seoulsillok</a>
     </div>
   </section>
 
   <section class="map-block">
     <header>
       <h2>서울 지도</h2>
-      <p>지도를 기준으로 구를 탐색해 보세요. 핀을 클릭하면 해당 구로 이동합니다.</p>
+      <p>구를 선택하면 해당 구 섹션으로 이동합니다.</p>
     </header>
     <SeoulArtMap districts={DISTRICTS} />
   </section>
 
   <section class="featured">
     <header>
-      <h2>최근 준비된 동네</h2>
-      <a href="/dong">전체 보기</a>
+      <h2>빠른 이동</h2>
+      <p>{DISTRICTS.length}개 구 · {ALL_DONGS.length}개 동네</p>
     </header>
     <div class="cards">
       {featured.map((dong) => (
         <a class="card" href={`/dong/${dong.slug}`}>
           <small>{dong.districtKo}</small>
           <h3>{dong.nameKo}</h3>
-          <span>기록 페이지 열기</span>
+          <span>페이지 보기</span>
         </a>
       ))}
     </div>
@@ -47,133 +47,121 @@ const featured = ALL_DONGS.slice(0, 12);
 
 <style>
   .hero {
-    padding: 3rem 0 2.2rem;
+    padding: 1.5rem 0 1.1rem;
   }
 
   .eyebrow {
     margin: 0;
-    color: var(--accent-soft);
-    letter-spacing: 0.14em;
-    font-size: 0.77rem;
+    color: #746d61;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
     font-weight: 700;
   }
 
   h1 {
-    margin: 0.9rem 0 0;
+    margin: 0.62rem 0 0;
     font-family: 'Fraunces', serif;
-    font-size: clamp(2.2rem, 5vw, 4rem);
-    line-height: 1.05;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    line-height: 1.06;
+    color: #201d18;
   }
 
   .lead {
-    margin: 1.2rem 0 0;
-    max-width: 720px;
-    color: var(--muted);
-    line-height: 1.7;
+    margin: 1rem 0 0;
+    max-width: 690px;
+    color: #544c42;
+    line-height: 1.72;
   }
 
   .hero-cta {
-    margin-top: 1.7rem;
+    margin-top: 1.2rem;
     display: flex;
-    gap: 0.8rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
   }
 
   .btn {
     text-decoration: none;
     border-radius: 999px;
-    padding: 0.72rem 1.1rem;
-    font-size: 0.92rem;
+    padding: 0.62rem 0.95rem;
+    font-size: 0.86rem;
     font-weight: 700;
+    border: 1px solid #1f1d19;
   }
 
-  .btn.primary {
-    color: #211106;
-    background: linear-gradient(140deg, #ffb479, #f57c3d);
+  .btn.dark {
+    color: #fcfbf8;
+    background: #1f1d19;
   }
 
-  .btn.ghost {
-    color: var(--text);
-    border: 1px solid var(--line);
-    background: rgba(255, 242, 224, 0.03);
+  .btn.light {
+    color: #1f1d19;
+    background: #fcfbf8;
   }
 
   .map-block {
-    margin-top: 1.3rem;
+    margin-top: 1rem;
   }
 
-  .map-block header h2,
-  .featured header h2 {
+  .map-block h2,
+  .featured h2 {
     margin: 0;
     font-family: 'Fraunces', serif;
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    color: #201d18;
+    font-size: clamp(1.4rem, 3vw, 2rem);
   }
 
-  .map-block header p {
-    color: var(--muted);
-    margin: 0.5rem 0 1rem;
+  .map-block p,
+  .featured p {
+    margin: 0.45rem 0 0.8rem;
+    color: #60584d;
   }
 
   .featured {
-    margin-top: 2.8rem;
-  }
-
-  .featured header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-  }
-
-  .featured header a {
-    color: var(--accent-soft);
-    text-decoration: none;
-    font-size: 0.9rem;
+    margin-top: 1.8rem;
   }
 
   .cards {
-    margin-top: 1rem;
+    margin-top: 0.8rem;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.8rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
   }
 
   .card {
-    padding: 1rem;
-    border-radius: 18px;
+    padding: 0.84rem;
+    border-radius: 12px;
     text-decoration: none;
-    color: var(--text);
-    border: 1px solid var(--line);
-    background: linear-gradient(160deg, rgba(49, 34, 23, 0.8), rgba(25, 19, 14, 0.88));
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    color: #201d18;
+    border: 1px solid #e1dbcf;
+    background: #fff;
   }
 
   .card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(248, 183, 131, 0.52);
+    border-color: #1f1d19;
   }
 
   .card small {
-    color: var(--accent-soft);
+    color: #6a6256;
   }
 
   .card h3 {
-    margin: 0.22rem 0 0.8rem;
-    font-size: 1.03rem;
+    margin: 0.2rem 0 0.62rem;
+    font-size: 1rem;
   }
 
   .card span {
-    font-size: 0.85rem;
-    color: var(--muted);
+    font-size: 0.78rem;
+    color: #6a6256;
   }
 
-  @media (max-width: 980px) {
+  @media (max-width: 900px) {
     .cards {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 560px) {
     .cards {
       grid-template-columns: 1fr;
     }

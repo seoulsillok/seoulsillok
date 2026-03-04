@@ -2,13 +2,6 @@
 import Layout from '../../layouts/Layout.astro';
 import SeoulArtMap from '../../components/SeoulArtMap.astro';
 import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
-
-const selectedDistrict = Astro.url.searchParams.get('district') || '';
-const filteredDistricts = selectedDistrict
-  ? DISTRICTS.filter((district) => district.code === selectedDistrict)
-  : DISTRICTS;
-
-const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + district.dongs.length, 0);
 ---
 
 <Layout title="서울 동네 아카이브" description="서울 25개 구 동네 목록과 지도 탐색">
@@ -16,31 +9,29 @@ const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + distr
     <p class="eyebrow">SEOUL DONG DIRECTORY</p>
     <h1>서울 동네 기록</h1>
     <p>
-      현재 {DISTRICTS.length}개 구, {ALL_DONGS.length}개 동네를 정리했습니다.
-      {selectedDistrict ? ` 선택된 ${filteredDistricts[0]?.nameKo || ''}의 동네를 보고 있습니다.` : ' 구를 선택해 세부 동네를 빠르게 탐색할 수 있습니다.'}
+      지도의 구를 누르면 해당 구로 확대되고, 해당 구의 동네 목록만 표시됩니다.
+      총 {DISTRICTS.length}개 구, {ALL_DONGS.length}개 동네를 연결했습니다.
     </p>
   </section>
 
   <section class="map-area">
-    <SeoulArtMap districts={DISTRICTS} selectedDistrict={selectedDistrict} />
+    <SeoulArtMap districts={DISTRICTS} mode="interactive" />
   </section>
 
-  <section class="filters">
-    <a class:list={[{ active: selectedDistrict === '' }]} href="/dong">전체 ({ALL_DONGS.length})</a>
+  <section class="filters" aria-label="구 선택 필터">
+    <button type="button" data-filter-btn data-district-code="" class="active">전체 보기</button>
     {DISTRICTS.map((district) => (
-      <a
-        href={`/dong?district=${encodeURIComponent(district.code)}`}
-        class:list={[{ active: selectedDistrict === district.code }]}
-      >
-        {district.nameKo} ({district.dongs.length})
-      </a>
+      <button type="button" data-filter-btn data-district-code={district.code}>{district.nameKo}</button>
     ))}
   </section>
 
+  <section class="status-bar" aria-live="polite">
+    <p><strong data-selected-label>전체</strong> · <span data-visible-count data-total={ALL_DONGS.length}>{ALL_DONGS.length}</span>개 동네 표시 중</p>
+  </section>
+
   <section class="district-grid">
-    <p class="count">현재 표시 중: {visibleDongCount}개 동네</p>
-    {filteredDistricts.map((district) => (
-      <article class="district-card" id={district.code}>
+    {DISTRICTS.map((district) => (
+      <article class="district-card" id={`district-${district.code}`} data-district-card data-district-code={district.code} data-dongs={district.dongs.length}>
         <header>
           <h2>{district.nameKo}</h2>
           <small>{district.dongs.length}개 동네</small>
@@ -50,7 +41,7 @@ const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + distr
             <li>
               <a href={`/dong/${district.code}-${index + 1}`}>
                 <strong>{dong}</strong>
-                <span>기록 보러가기</span>
+                <span>기록 보기</span>
               </a>
             </li>
           ))}
@@ -60,29 +51,107 @@ const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + distr
   </section>
 </Layout>
 
+<script>
+  const mapFrame = document.querySelector('[data-map-frame]');
+  const mapButtons = Array.from(document.querySelectorAll('[data-district-btn]'));
+  const filterButtons = Array.from(document.querySelectorAll('[data-filter-btn]'));
+  const cards = Array.from(document.querySelectorAll('[data-district-card]'));
+  const selectedLabel = document.querySelector('[data-selected-label]');
+  const visibleCount = document.querySelector('[data-visible-count]');
+
+  function applySelection(code) {
+    const normalized = code || '';
+
+    mapButtons.forEach((button) => {
+      const isActive = button.dataset.districtCode === normalized;
+      button.classList.toggle('active', isActive);
+    });
+
+    filterButtons.forEach((button) => {
+      const isActive = button.dataset.districtCode === normalized;
+      button.classList.toggle('active', isActive);
+    });
+
+    let count = 0;
+    cards.forEach((card) => {
+      const isMatch = !normalized || card.dataset.districtCode === normalized;
+      card.hidden = !isMatch;
+      if (isMatch) {
+        count += Number(card.dataset.dongs || 0);
+      }
+    });
+
+    if (selectedLabel) {
+      const activeButton = mapButtons.find((button) => button.dataset.districtCode === normalized);
+      selectedLabel.textContent = activeButton ? activeButton.textContent?.trim() || '선택' : '전체';
+    }
+
+    if (visibleCount) {
+      visibleCount.textContent = String(count || Number(visibleCount.dataset.total || 0));
+    }
+
+    if (!mapFrame) return;
+
+    if (!normalized) {
+      mapFrame.classList.remove('is-zoomed');
+      mapFrame.style.setProperty('--focus-x', '50%');
+      mapFrame.style.setProperty('--focus-y', '50%');
+      history.replaceState(null, '', '/dong');
+      return;
+    }
+
+    const activeMapButton = mapButtons.find((button) => button.dataset.districtCode === normalized);
+    const x = activeMapButton?.dataset.focusX || '50';
+    const y = activeMapButton?.dataset.focusY || '50';
+
+    mapFrame.classList.add('is-zoomed');
+    mapFrame.style.setProperty('--focus-x', `${x}%`);
+    mapFrame.style.setProperty('--focus-y', `${y}%`);
+
+    history.replaceState(null, '', `/dong#district-${normalized}`);
+  }
+
+  mapButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      applySelection(button.dataset.districtCode || '');
+    });
+  });
+
+  filterButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      applySelection(button.dataset.districtCode || '');
+    });
+  });
+
+  const initialCode = location.hash.startsWith('#district-') ? location.hash.replace('#district-', '') : '';
+  const isValid = cards.some((card) => card.dataset.districtCode === initialCode);
+  applySelection(isValid ? initialCode : '');
+</script>
+
 <style>
   .intro {
-    margin-top: 0.3rem;
+    margin-top: 0.2rem;
   }
 
   .eyebrow {
     margin: 0;
-    letter-spacing: 0.14em;
-    color: var(--accent-soft);
+    letter-spacing: 0.12em;
+    color: #787064;
     font-weight: 700;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
   }
 
   h1 {
-    margin: 0.8rem 0 0.5rem;
+    margin: 0.6rem 0 0.45rem;
     font-family: 'Fraunces', serif;
-    font-size: clamp(2rem, 3.3vw, 3.1rem);
+    font-size: clamp(1.9rem, 3vw, 2.6rem);
+    color: #1f1d18;
   }
 
   .intro p {
-    color: var(--muted);
+    color: #4d463d;
     max-width: 760px;
-    line-height: 1.65;
+    line-height: 1.7;
   }
 
   .map-area {
@@ -93,45 +162,47 @@ const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + distr
     margin-top: 1rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.45rem;
   }
 
-  .filters a {
-    text-decoration: none;
-    color: var(--muted);
-    border: 1px solid var(--line);
+  .filters button {
+    border: 1px solid #d8d1c3;
+    background: #fcfbf8;
+    color: #2b2721;
     border-radius: 999px;
-    padding: 0.38rem 0.72rem;
-    font-size: 0.78rem;
-    background: rgba(255, 251, 244, 0.02);
+    padding: 0.36rem 0.66rem;
+    font-size: 0.75rem;
+    cursor: pointer;
   }
 
-  .filters a.active {
-    color: #1f1206;
-    background: linear-gradient(145deg, #f9c296, #f57c3d);
-    border-color: rgba(255, 204, 158, 0.7);
-    font-weight: 700;
+  .filters button.active {
+    background: #1f1d19;
+    color: #fcfbf8;
+    border-color: #1f1d19;
+  }
+
+  .status-bar {
+    margin-top: 0.85rem;
+    color: #4d463d;
+    font-size: 0.92rem;
+  }
+
+  .status-bar p {
+    margin: 0;
   }
 
   .district-grid {
-    margin-top: 1.25rem;
+    margin-top: 1rem;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.9rem;
-  }
-
-  .count {
-    margin: 0;
-    grid-column: 1 / -1;
-    color: var(--muted);
-    font-size: 0.9rem;
+    gap: 0.85rem;
   }
 
   .district-card {
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 1rem;
-    background: linear-gradient(150deg, rgba(43, 31, 22, 0.82), rgba(20, 16, 12, 0.84));
+    border: 1px solid #e4dfd4;
+    border-radius: 16px;
+    padding: 0.95rem;
+    background: #fffdf9;
   }
 
   .district-card header {
@@ -139,16 +210,17 @@ const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + distr
     justify-content: space-between;
     align-items: baseline;
     gap: 0.8rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.75rem;
   }
 
   h2 {
     margin: 0;
-    font-size: 1.25rem;
+    color: #1f1d18;
+    font-size: 1.15rem;
   }
 
   header small {
-    color: var(--accent-soft);
+    color: #6a6258;
   }
 
   ul {
@@ -157,31 +229,30 @@ const visibleDongCount = filteredDistricts.reduce((sum, district) => sum + distr
     list-style: none;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.45rem;
+    gap: 0.42rem;
   }
 
   li a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
-    border: 1px solid rgba(245, 226, 198, 0.14);
-    border-radius: 11px;
+    gap: 0.45rem;
+    border: 1px solid #e7e1d6;
+    border-radius: 10px;
     text-decoration: none;
-    padding: 0.5rem 0.58rem;
-    color: var(--text);
-    font-size: 0.85rem;
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    padding: 0.44rem 0.56rem;
+    color: #24211c;
+    font-size: 0.84rem;
+    background: #ffffff;
   }
 
   li a:hover {
-    border-color: rgba(248, 186, 138, 0.7);
-    transform: translateY(-1px);
+    border-color: #1f1d19;
   }
 
   li span {
-    color: var(--muted);
-    font-size: 0.7rem;
+    color: #70685d;
+    font-size: 0.72rem;
   }
 
   @media (max-width: 960px) {

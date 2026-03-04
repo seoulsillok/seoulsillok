@@ -1,48 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { findDongBySlug, getDistrictByCode, ALL_DONGS, SOCIAL_LINKS } from '../../data/seoul';
-
-type InstagramPost = {
-  title: string;
-  url: string;
-  caption: string;
-};
-
-const INSTAGRAM_POSTS: Record<string, InstagramPost> = {
-  'songpa-3': {
-    title: '풍납동 산책로',
-    url: SOCIAL_LINKS.instagram,
-    caption: `풍납동 산책로
-
-1. 태백식당 (점심)
-2. 두부부 (베이커리)
-3. 인트로 베이커리 (베이커리)
-4. 풍납백제 문화공원 (산책)
-5. 광나루 한강공원 (산책)
-6. 유천냉면 (저녁)
-
-머물 곳 잃은 마음은
-정처 없이 계절을 헤매이고
-흩어지는 찰나의 순간들을
-두 눈 가득히 꾹꾹 눌러 담네
-
-Pungnap-dong Walk Route
-
-1. TaeBaek Restaurant (Lunch)
-2. Dobubu (Bakery)
-3. Intro Bakery (Bakery)
-4. Pungnap Baekje Cultural Park (Walk)
-5. Gwangnaru Hangang Park (Walk)
-6. Yucheon Naengmyeon (Dinner)
-
-A heart with nowhere to rest
-Wanders aimlessly through the seasons
-Those scattering, fleeting moments
-I fill my eyes, pressing them deep inside
-
-#서울 #풍납동 #풍납동맛집 #풍납동맛집추천 #풍납동카페 #풍납동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Pungnap_dong`
-  }
-};
+import { INSTAGRAM_POSTS_BY_DONG, INSTAGRAM_PROFILE_URL } from '../../data/instagram-posts.generated';
 
 export async function getStaticPaths() {
   return ALL_DONGS.map((entry) => ({ params: { dong: entry.slug } }));
@@ -52,39 +11,52 @@ const slug = String(Astro.params.dong || '');
 const record = findDongBySlug(slug);
 const district = record ? getDistrictByCode(record.districtCode) : undefined;
 
-const instagramPost = record
-  ? INSTAGRAM_POSTS[record.slug] ?? {
-      title: `${record.nameKo} 기록`,
-      url: SOCIAL_LINKS.instagram,
-      caption: `${record.nameKo} 관련 포스트는 서울실록 인스타그램 프로필에서 확인해 주세요.`
-    }
-  : null;
+const instagramPost = record ? INSTAGRAM_POSTS_BY_DONG[record.nameKo] : undefined;
+const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPost.url) : false;
 ---
 
 <Layout title={record ? `${record.nameKo} 기록` : '동네 기록'} description="서울 동네 기록 상세 페이지">
   {record ? (
     <article class="detail">
-      <p class="eyebrow">SEOUL MEMORY SHEET</p>
+      <p class="eyebrow">INSTAGRAM ARCHIVE</p>
       <h1>{record.nameKo}</h1>
-      <p class="meta">{record.districtKo} · slug: {record.slug}</p>
-      <p class="summary">
-        이 페이지는 Instagram 중심 아카이브입니다. 아래 카드에서 포스트 내용을 확인하고
-        서울실록 인스타그램 프로필로 이동해 해당 포스팅을 확인하세요.
-      </p>
+      <p class="meta">{record.districtKo}</p>
 
       {instagramPost ? (
-        <section class="instagram-post" aria-label="인스타그램 포스트">
+        <section class="post-card" aria-label="인스타그램 포스트">
           <header>
             <small>Instagram Post</small>
             <h2>{instagramPost.title}</h2>
           </header>
+
+          {hasEmbeddablePost ? (
+            <div class="embed">
+              <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14"></blockquote>
+              <script async src="https://www.instagram.com/embed.js"></script>
+            </div>
+          ) : (
+            <p class="note">자동 연결된 퍼머링크가 아직 없어 프로필 링크로 연결됩니다.</p>
+          )}
+
           <pre>{instagramPost.caption}</pre>
-          <a href={instagramPost.url} target="_blank" rel="noreferrer">@seoulsillok 포스트 보러 가기</a>
+          <a href={instagramPost.url} target="_blank" rel="noreferrer">해당 포스트 보러 가기</a>
         </section>
-      ) : null}
+      ) : (
+        <section class="post-card" aria-label="인스타그램 포스트 없음">
+          <header>
+            <small>Instagram Post</small>
+            <h2>등록 대기 중</h2>
+          </header>
+          <p class="note">
+            이 동네에 매핑된 Instagram 포스트를 아직 찾지 못했습니다.
+            {record.nameKo} 키워드가 포함된 캡션 포스팅을 올리면 자동 연결됩니다.
+          </p>
+          <a href={INSTAGRAM_PROFILE_URL} target="_blank" rel="noreferrer">@seoulsillok 프로필 열기</a>
+        </section>
+      )}
 
       <section class="actions">
-        <a href={`/dong?district=${record.districtCode}`}>← {record.districtKo} 목록으로</a>
+        <a href={`/dong#district-${record.districtCode}`}>← {record.districtKo} 목록으로</a>
         <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">서울실록 인스타그램</a>
       </section>
 
@@ -104,7 +76,7 @@ const instagramPost = record
   ) : (
     <article class="detail">
       <h1>존재하지 않는 동네 페이지입니다.</h1>
-      <p class="summary">요청한 경로를 찾을 수 없습니다. 동네 목록으로 이동해 주세요.</p>
+      <p class="note">요청한 경로를 찾을 수 없습니다. 동네 목록으로 이동해 주세요.</p>
       <section class="actions">
         <a href="/dong">서울 동네 목록으로 이동</a>
       </section>
@@ -116,126 +88,135 @@ const instagramPost = record
   .detail {
     max-width: 860px;
     margin: 0 auto;
-    border: 1px solid var(--line);
-    border-radius: 28px;
-    padding: 1.4rem;
-    background: linear-gradient(160deg, rgba(50, 37, 25, 0.78), rgba(16, 12, 8, 0.9));
-    box-shadow: 0 26px 60px rgba(0, 0, 0, 0.35);
+    border: 1px solid #e4dfd4;
+    border-radius: 16px;
+    padding: 1.05rem;
+    background: #fffdf9;
   }
 
   .eyebrow {
     margin: 0;
-    color: var(--accent-soft);
-    letter-spacing: 0.12em;
-    font-size: 0.74rem;
+    color: #6b645a;
+    letter-spacing: 0.11em;
+    font-size: 0.71rem;
     font-weight: 700;
   }
 
   h1 {
-    margin: 0.8rem 0 0;
+    margin: 0.5rem 0 0;
     font-family: 'Fraunces', serif;
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    color: #1e1b17;
   }
 
   .meta {
-    color: var(--muted);
-    margin: 0.45rem 0 1rem;
+    color: #555045;
+    margin: 0.2rem 0 0.9rem;
     font-size: 0.9rem;
   }
 
-  .summary {
-    margin: 0;
-    color: var(--muted);
-    line-height: 1.7;
+  .post-card {
+    border: 1px solid #e7e1d6;
+    border-radius: 12px;
+    padding: 0.9rem;
+    background: #fff;
   }
 
-  .instagram-post {
-    margin-top: 1.1rem;
-    border: 1px solid rgba(247, 225, 198, 0.2);
-    border-radius: 15px;
-    padding: 1rem;
-    background: rgba(255, 250, 244, 0.02);
+  .post-card header small {
+    color: #6b645a;
   }
 
-  .instagram-post header small {
-    color: var(--accent-soft);
+  .post-card h2 {
+    margin: 0.25rem 0 0;
+    font-size: 1.1rem;
+    color: #201d18;
   }
 
-  .instagram-post h2 {
-    margin: 0.35rem 0 0;
-    font-size: 1.15rem;
+  .embed {
+    margin-top: 0.8rem;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid #ebe4d8;
+    background: #fff;
   }
 
-  .instagram-post pre {
-    margin: 0.9rem 0;
+  pre {
+    margin: 0.85rem 0;
     white-space: pre-wrap;
     font-family: 'Noto Sans KR', sans-serif;
-    color: var(--text);
-    line-height: 1.68;
-    font-size: 0.92rem;
+    color: #2c281f;
+    line-height: 1.66;
+    font-size: 0.9rem;
   }
 
-  .instagram-post a {
+  .note {
+    margin: 0.85rem 0;
+    color: #585145;
+    line-height: 1.65;
+    font-size: 0.9rem;
+  }
+
+  .post-card > a,
+  .actions a {
     display: inline-block;
     text-decoration: none;
-    color: #180d06;
-    font-weight: 700;
+    color: #1d1b16;
     border-radius: 999px;
-    background: linear-gradient(135deg, #fac89f, #f58f56);
-    padding: 0.46rem 0.84rem;
-    font-size: 0.82rem;
+    border: 1px solid #d6cfbf;
+    background: #fff;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .post-card > a:hover,
+  .actions a:hover {
+    border-color: #1f1d19;
+    background: #1f1d19;
+    color: #fff;
   }
 
   .actions {
-    margin-top: 1rem;
+    margin-top: 0.9rem;
     display: flex;
-    gap: 0.7rem;
+    gap: 0.56rem;
     flex-wrap: wrap;
   }
 
-  .actions a {
-    text-decoration: none;
-    color: #180d06;
-    font-weight: 700;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #fac89f, #f58f56);
-    padding: 0.46rem 0.84rem;
-    font-size: 0.82rem;
-  }
-
   .related {
-    margin-top: 1.35rem;
-    border-top: 1px solid var(--line);
-    padding-top: 1rem;
+    margin-top: 1.05rem;
+    border-top: 1px solid #ece7dc;
+    padding-top: 0.85rem;
   }
 
   .related h2 {
     margin: 0;
-    font-size: 1.1rem;
+    color: #24201a;
+    font-size: 1rem;
   }
 
   .related ul {
-    margin: 0.7rem 0 0;
+    margin: 0.65rem 0 0;
     padding: 0;
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.45rem;
+    gap: 0.42rem;
   }
 
   .related a {
     text-decoration: none;
-    color: var(--muted);
-    border: 1px solid rgba(247, 225, 198, 0.2);
+    color: #5d564a;
+    border: 1px solid #e7e1d6;
     border-radius: 999px;
-    padding: 0.3rem 0.6rem;
+    padding: 0.25rem 0.56rem;
     font-size: 0.78rem;
   }
 
   .related a.active {
-    color: #1c1008;
-    background: linear-gradient(125deg, #ffd0a8, #f58a4e);
-    border-color: rgba(255, 205, 163, 0.82);
+    color: #fff;
+    background: #1f1d19;
+    border-color: #1f1d19;
     font-weight: 700;
   }
 </style>

@@ -5,7 +5,8 @@
   "scripts": {
     "astro": "astro",
     "dev": "astro dev",
-    "build": "astro build",
+    "sync-instagram": "node ./scripts/sync-instagram-posts.mjs",
+    "build": "npm run sync-instagram && astro build",
     "postbuild": "node ./scripts/write-assetsignore.js",
     "preview": "astro build && wrangler dev",
     "cf-typegen": "wrangler types",

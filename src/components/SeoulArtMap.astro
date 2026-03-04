@@ -3,26 +3,35 @@ import type { SeoulDistrict } from '../data/seoul';
 
 interface Props {
   districts: SeoulDistrict[];
-  selectedDistrict?: string;
+  mode?: 'link' | 'interactive';
 }
 
-const { districts, selectedDistrict } = Astro.props;
+const { districts, mode = 'link' } = Astro.props;
+const isInteractive = mode === 'interactive';
 ---
 
-<section class="map-wrap" aria-label="서울 지도">
-  <div class="aurora" aria-hidden="true"></div>
-  <div class="map-frame">
-    <img src="/images/seoul_map.jpg" alt="서울 지도" loading="lazy" />
-    <ul class="hotspots">
+<section class="map-wrap" aria-label="서울 지도" data-map-root>
+  <div class="map-frame" data-map-frame>
+    <img src="/images/seoul_map.jpg" alt="서울 지도" loading="lazy" class="map-image" />
+    <ul class="hotspots" aria-label="서울 구 선택">
       {districts.map((district) => (
         <li style={`left:${district.map.x}%; top:${district.map.y}%;`}>
-          <a
-            href={`/dong?district=${encodeURIComponent(district.code)}`}
-            class:list={[{ selected: selectedDistrict === district.code }]}
-            title={`${district.nameKo} 보기`}
-          >
-            <span>{district.nameKo}</span>
-          </a>
+          {isInteractive ? (
+            <button
+              type="button"
+              title={`${district.nameKo} 보기`}
+              data-district-btn
+              data-district-code={district.code}
+              data-focus-x={district.map.x}
+              data-focus-y={district.map.y}
+            >
+              <span>{district.nameKo}</span>
+            </button>
+          ) : (
+            <a href={`/dong#district-${district.code}`} title={`${district.nameKo} 보기`}>
+              <span>{district.nameKo}</span>
+            </a>
+          )}
         </li>
       ))}
     </ul>
@@ -31,44 +40,31 @@ const { districts, selectedDistrict } = Astro.props;
 
 <style>
   .map-wrap {
-    position: relative;
     margin: 0;
-    border-radius: 28px;
+    border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(243, 229, 210, 0.32);
-    box-shadow: 0 30px 80px rgba(30, 25, 20, 0.4);
-  }
-
-  .aurora {
-    position: absolute;
-    inset: -40% -10% auto;
-    height: 70%;
-    background:
-      radial-gradient(circle at 20% 30%, rgba(245, 124, 61, 0.38) 0%, transparent 40%),
-      radial-gradient(circle at 70% 20%, rgba(193, 98, 18, 0.32) 0%, transparent 42%),
-      radial-gradient(circle at 50% 80%, rgba(82, 124, 84, 0.28) 0%, transparent 36%);
-    pointer-events: none;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #fbf9f5;
   }
 
   .map-frame {
     position: relative;
     aspect-ratio: 2598 / 2126;
-    background: #1a1610;
+    background: #f7f4ee;
+    --focus-x: 50%;
+    --focus-y: 50%;
   }
 
-  .map-frame::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(10, 9, 8, 0.05), rgba(10, 9, 8, 0.45));
-    pointer-events: none;
-  }
-
-  img {
+  .map-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: contrast(1.07) saturate(1.05);
+    transition: transform 0.45s ease;
+    transform-origin: var(--focus-x) var(--focus-y);
+  }
+
+  .map-frame.is-zoomed .map-image {
+    transform: scale(1.35);
   }
 
   .hotspots {
@@ -85,50 +81,34 @@ const { districts, selectedDistrict } = Astro.props;
     transform: translate(-50%, -50%);
   }
 
-  .hotspots a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: #fff9f0;
-    text-decoration: none;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    padding: 0.38rem 0.6rem;
+  .hotspots a,
+  .hotspots button {
+    border: 1px solid rgba(0, 0, 0, 0.22);
     border-radius: 999px;
-    border: 1px solid rgba(255, 237, 213, 0.72);
-    background: rgba(35, 21, 11, 0.72);
-    backdrop-filter: blur(8px);
-    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  .hotspots a::before {
-    content: '';
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: #f57c3d;
-    box-shadow: 0 0 0 6px rgba(245, 124, 61, 0.18);
+    background: rgba(255, 255, 255, 0.9);
+    color: #1f1c16;
+    text-decoration: none;
+    padding: 0.28rem 0.48rem;
+    font-size: 0.66rem;
+    line-height: 1;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
   }
 
   .hotspots a:hover,
-  .hotspots a.selected {
-    transform: translateY(-1px);
-    background: rgba(106, 44, 10, 0.86);
-    box-shadow: 0 10px 24px rgba(10, 6, 3, 0.54);
+  .hotspots button:hover,
+  .hotspots button.active {
+    background: #1f1d19;
+    color: #faf8f2;
+    border-color: #1f1d19;
   }
 
-  @media (max-width: 900px) {
-    .hotspots a {
-      font-size: 0.6rem;
-      padding: 0.25rem 0.45rem;
-    }
-
-    .hotspots a::before {
-      width: 0.32rem;
-      height: 0.32rem;
-      box-shadow: 0 0 0 4px rgba(245, 124, 61, 0.2);
+  @media (max-width: 760px) {
+    .hotspots a,
+    .hotspots button {
+      font-size: 0.56rem;
+      padding: 0.2rem 0.33rem;
     }
   }
 </style>
