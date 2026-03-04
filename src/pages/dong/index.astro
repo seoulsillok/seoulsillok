@@ -9,20 +9,13 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
     <p class="eyebrow">SEOUL DONG DIRECTORY</p>
     <h1>서울 동네 기록</h1>
     <p>
-      지도의 구를 누르면 해당 구로 확대되고, 해당 구의 동네 목록만 표시됩니다.
-      총 {DISTRICTS.length}개 구, {ALL_DONGS.length}개 동네를 연결했습니다.
+      지도 위 구 라벨을 클릭하면 해당 구만 확대되고,
+      그 구에 속한 동 라벨만 지도 위에 나타납니다.
     </p>
   </section>
 
   <section class="map-area">
     <SeoulArtMap districts={DISTRICTS} mode="interactive" />
-  </section>
-
-  <section class="filters" aria-label="구 선택 필터">
-    <button type="button" data-filter-btn data-district-code="" class="active">전체 보기</button>
-    {DISTRICTS.map((district) => (
-      <button type="button" data-filter-btn data-district-code={district.code}>{district.nameKo}</button>
-    ))}
   </section>
 
   <section class="status-bar" aria-live="polite">
@@ -52,25 +45,19 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
 </Layout>
 
 <script>
-  const mapFrame = document.querySelector('[data-map-frame]');
-  const mapButtons = Array.from(document.querySelectorAll('[data-district-btn]'));
-  const filterButtons = Array.from(document.querySelectorAll('[data-filter-btn]'));
   const cards = Array.from(document.querySelectorAll('[data-district-card]'));
   const selectedLabel = document.querySelector('[data-selected-label]');
   const visibleCount = document.querySelector('[data-visible-count]');
 
+  const districtNameByCode = new Map(
+    cards.map((card) => [
+      card.dataset.districtCode,
+      card.querySelector('h2')?.textContent?.trim() || ''
+    ])
+  );
+
   function applySelection(code) {
     const normalized = code || '';
-
-    mapButtons.forEach((button) => {
-      const isActive = button.dataset.districtCode === normalized;
-      button.classList.toggle('active', isActive);
-    });
-
-    filterButtons.forEach((button) => {
-      const isActive = button.dataset.districtCode === normalized;
-      button.classList.toggle('active', isActive);
-    });
 
     let count = 0;
     cards.forEach((card) => {
@@ -82,45 +69,17 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
     });
 
     if (selectedLabel) {
-      const activeButton = mapButtons.find((button) => button.dataset.districtCode === normalized);
-      selectedLabel.textContent = activeButton ? activeButton.textContent?.trim() || '선택' : '전체';
+      selectedLabel.textContent = normalized ? districtNameByCode.get(normalized) || '선택' : '전체';
     }
 
     if (visibleCount) {
       visibleCount.textContent = String(count || Number(visibleCount.dataset.total || 0));
     }
-
-    if (!mapFrame) return;
-
-    if (!normalized) {
-      mapFrame.classList.remove('is-zoomed');
-      mapFrame.style.setProperty('--focus-x', '50%');
-      mapFrame.style.setProperty('--focus-y', '50%');
-      history.replaceState(null, '', '/dong');
-      return;
-    }
-
-    const activeMapButton = mapButtons.find((button) => button.dataset.districtCode === normalized);
-    const x = activeMapButton?.dataset.focusX || '50';
-    const y = activeMapButton?.dataset.focusY || '50';
-
-    mapFrame.classList.add('is-zoomed');
-    mapFrame.style.setProperty('--focus-x', `${x}%`);
-    mapFrame.style.setProperty('--focus-y', `${y}%`);
-
-    history.replaceState(null, '', `/dong#district-${normalized}`);
   }
 
-  mapButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      applySelection(button.dataset.districtCode || '');
-    });
-  });
-
-  filterButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      applySelection(button.dataset.districtCode || '');
-    });
+  window.addEventListener('district-change', (event) => {
+    const code = event?.detail?.code || '';
+    applySelection(code);
   });
 
   const initialCode = location.hash.startsWith('#district-') ? location.hash.replace('#district-', '') : '';
@@ -156,29 +115,6 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
 
   .map-area {
     margin-top: 1rem;
-  }
-
-  .filters {
-    margin-top: 1rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-  }
-
-  .filters button {
-    border: 1px solid #d8d1c3;
-    background: #fcfbf8;
-    color: #2b2721;
-    border-radius: 999px;
-    padding: 0.36rem 0.66rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-  }
-
-  .filters button.active {
-    background: #1f1d19;
-    color: #fcfbf8;
-    border-color: #1f1d19;
   }
 
   .status-bar {

@@ -8,12 +8,21 @@ interface Props {
 
 const { districts, mode = 'link' } = Astro.props;
 const isInteractive = mode === 'interactive';
+
+const districtPayload = districts.map((district) => ({
+  code: district.code,
+  nameKo: district.nameKo,
+  x: district.map.x,
+  y: district.map.y,
+  dongs: district.dongs
+}));
 ---
 
-<section class="map-wrap" aria-label="서울 지도" data-map-root>
+<section class="map-wrap" aria-label="서울 지도" data-map-root data-map-mode={mode}>
   <div class="map-frame" data-map-frame>
     <img src="/images/seoul_map.jpg" alt="서울 지도" loading="lazy" class="map-image" />
-    <ul class="hotspots" aria-label="서울 구 선택">
+
+    <ul class="district-layer" aria-label="서울 구 선택" data-district-layer>
       {districts.map((district) => (
         <li style={`left:${district.map.x}%; top:${district.map.y}%;`}>
           {isInteractive ? (
@@ -25,25 +34,121 @@ const isInteractive = mode === 'interactive';
               data-focus-x={district.map.x}
               data-focus-y={district.map.y}
             >
-              <span>{district.nameKo}</span>
+              {district.nameKo}
             </button>
           ) : (
             <a href={`/dong#district-${district.code}`} title={`${district.nameKo} 보기`}>
-              <span>{district.nameKo}</span>
+              {district.nameKo}
             </a>
           )}
         </li>
       ))}
     </ul>
+
+    {isInteractive ? <ul class="dong-layer" data-dong-layer aria-label="선택된 구의 동"></ul> : null}
+
+    {isInteractive ? <button class="reset-btn" type="button" data-map-reset>전체 구 보기</button> : null}
   </div>
+
+  {isInteractive ? (
+    <script type="application/json" data-map-districts set:html={JSON.stringify(districtPayload)}></script>
+  ) : null}
 </section>
+
+{isInteractive ? (
+  <script>
+    const root = document.querySelector('[data-map-root][data-map-mode="interactive"]');
+
+    if (root) {
+      const frame = root.querySelector('[data-map-frame]');
+      const districtButtons = Array.from(root.querySelectorAll('[data-district-btn]'));
+      const dongLayer = root.querySelector('[data-dong-layer]');
+      const resetButton = root.querySelector('[data-map-reset]');
+      const jsonEl = root.querySelector('[data-map-districts]');
+
+      const districts = jsonEl ? JSON.parse(jsonEl.textContent || '[]') : [];
+
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+      const buildDongMarkers = (district) => {
+        if (!dongLayer) return;
+        dongLayer.innerHTML = '';
+
+        const total = district.dongs.length;
+        district.dongs.forEach((dong, index) => {
+          const angle = (Math.PI * 2 * index) / total;
+          const ring = Math.floor(index / 8);
+          const radiusX = 2.8 + ring * 2.1;
+          const radiusY = 2.2 + ring * 1.65;
+
+          const x = clamp(district.x + Math.cos(angle) * radiusX, 4, 96);
+          const y = clamp(district.y + Math.sin(angle) * radiusY, 5, 95);
+
+          const item = document.createElement('li');
+          item.style.left = `${x}%`;
+          item.style.top = `${y}%`;
+
+          const link = document.createElement('a');
+          link.href = `/dong/${district.code}-${index + 1}`;
+          link.textContent = dong;
+          link.title = `${dong} 기록 보기`;
+
+          item.appendChild(link);
+          dongLayer.appendChild(item);
+        });
+      };
+
+      const applySelection = (code) => {
+        const selected = districts.find((district) => district.code === code);
+
+        districtButtons.forEach((button) => {
+          button.classList.toggle('active', button.dataset.districtCode === code);
+        });
+
+        if (!frame) return;
+
+        if (!selected) {
+          frame.classList.remove('is-zoomed');
+          frame.style.setProperty('--focus-x', '50%');
+          frame.style.setProperty('--focus-y', '50%');
+          if (dongLayer) dongLayer.innerHTML = '';
+          window.dispatchEvent(new CustomEvent('district-change', { detail: { code: '' } }));
+          history.replaceState(null, '', '/dong');
+          return;
+        }
+
+        frame.classList.add('is-zoomed');
+        frame.style.setProperty('--focus-x', `${selected.x}%`);
+        frame.style.setProperty('--focus-y', `${selected.y}%`);
+        buildDongMarkers(selected);
+
+        window.dispatchEvent(new CustomEvent('district-change', { detail: { code: selected.code } }));
+        history.replaceState(null, '', `/dong#district-${selected.code}`);
+      };
+
+      districtButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const code = button.dataset.districtCode || '';
+          const isAlreadyActive = button.classList.contains('active');
+          applySelection(isAlreadyActive ? '' : code);
+        });
+      });
+
+      resetButton?.addEventListener('click', () => applySelection(''));
+
+      const initialCode = location.hash.startsWith('#district-') ? location.hash.replace('#district-', '') : '';
+      const isValid = districts.some((district) => district.code === initialCode);
+      applySelection(isValid ? initialCode : '');
+    }
+  </script>
+) : null}
 
 <style>
   .map-wrap {
     margin: 0;
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     background: #fbf9f5;
   }
 
@@ -58,16 +163,17 @@ const isInteractive = mode === 'interactive';
   .map-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transition: transform 0.45s ease;
     transform-origin: var(--focus-x) var(--focus-y);
   }
 
   .map-frame.is-zoomed .map-image {
-    transform: scale(1.35);
+    transform: scale(1.32);
   }
 
-  .hotspots {
+  .district-layer,
+  .dong-layer {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -76,39 +182,81 @@ const isInteractive = mode === 'interactive';
     z-index: 2;
   }
 
-  .hotspots li {
+  .district-layer li,
+  .dong-layer li {
     position: absolute;
     transform: translate(-50%, -50%);
   }
 
-  .hotspots a,
-  .hotspots button {
-    border: 1px solid rgba(0, 0, 0, 0.22);
+  .district-layer a,
+  .district-layer button {
+    border: 1px solid rgba(0, 0, 0, 0.25);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
     color: #1f1c16;
     text-decoration: none;
-    padding: 0.28rem 0.48rem;
-    font-size: 0.66rem;
+    padding: 0.28rem 0.5rem;
+    font-size: 0.65rem;
     line-height: 1;
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
   }
 
-  .hotspots a:hover,
-  .hotspots button:hover,
-  .hotspots button.active {
+  .district-layer a:hover,
+  .district-layer button:hover,
+  .district-layer button.active {
     background: #1f1d19;
     color: #faf8f2;
     border-color: #1f1d19;
   }
 
+  .dong-layer a {
+    display: inline-block;
+    border: 1px solid #c8c0b1;
+    border-radius: 8px;
+    background: rgba(252, 251, 248, 0.95);
+    color: #2a261f;
+    text-decoration: none;
+    padding: 0.2rem 0.36rem;
+    font-size: 0.58rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .dong-layer a:hover {
+    border-color: #1f1d19;
+  }
+
+  .reset-btn {
+    position: absolute;
+    left: 0.7rem;
+    bottom: 0.7rem;
+    z-index: 3;
+    border: 1px solid #cfc7b8;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1f1d19;
+    font-size: 0.66rem;
+    padding: 0.25rem 0.48rem;
+    cursor: pointer;
+  }
+
+  .reset-btn:hover {
+    border-color: #1f1d19;
+  }
+
   @media (max-width: 760px) {
-    .hotspots a,
-    .hotspots button {
-      font-size: 0.56rem;
-      padding: 0.2rem 0.33rem;
+    .district-layer a,
+    .district-layer button {
+      font-size: 0.53rem;
+      padding: 0.18rem 0.31rem;
+    }
+
+    .dong-layer a {
+      font-size: 0.5rem;
+      padding: 0.16rem 0.26rem;
     }
   }
 </style>
