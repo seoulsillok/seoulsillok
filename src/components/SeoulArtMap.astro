@@ -1,6 +1,5 @@
 ---
 import type { SeoulDistrict } from '../data/seoul';
-import { INSTAGRAM_POSTS_BY_DONG } from '../data/instagram-posts.generated';
 
 interface Props {
   districts: SeoulDistrict[];
@@ -17,42 +16,50 @@ const districtPayload = districts.map((district) => ({
   y: district.map.y,
   dongs: district.dongs.map((dong, index) => ({
     nameKo: dong,
-    slug: `${district.code}-${index + 1}`,
-    postUrl: INSTAGRAM_POSTS_BY_DONG[dong]?.url || ''
+    slug: `${district.code}-${index + 1}`
   }))
 }));
 ---
 
 <section class="map-wrap" aria-label="서울 지도" data-map-root data-map-mode={mode}>
   <div class="map-frame" data-map-frame>
-    <img src="/images/seoul_map.jpg" alt="서울 지도" loading="lazy" class="map-image" />
+    <div class="map-scene" data-map-scene>
+      <img src="/images/seoul_map.jpg" alt="서울 지도" loading="lazy" class="map-image" />
 
-    <ul class="district-layer" aria-label="서울 구 선택" data-district-layer>
-      {districts.map((district) => (
-        <li style={`left:${district.map.x}%; top:${district.map.y}%;`}>
-          {isInteractive ? (
-            <button
-              type="button"
-              title={`${district.nameKo} 보기`}
-              data-district-btn
-              data-district-code={district.code}
-              data-focus-x={district.map.x}
-              data-focus-y={district.map.y}
-            >
-              {district.nameKo}
-            </button>
-          ) : (
-            <a href={`/dong#district-${district.code}`} title={`${district.nameKo} 보기`}>
-              {district.nameKo}
-            </a>
-          )}
-        </li>
-      ))}
-    </ul>
+      <ul class="district-layer" aria-label="서울 구 선택" data-district-layer>
+        {districts.map((district) => (
+          <li style={`left:${district.map.x}%; top:${district.map.y}%;`}>
+            {isInteractive ? (
+              <button
+                type="button"
+                title={`${district.nameKo} 보기`}
+                aria-label={`${district.nameKo} 보기`}
+                aria-pressed="false"
+                data-district-btn
+                data-district-code={district.code}
+              >
+                {district.nameKo}
+              </button>
+            ) : (
+              <a href={`/dong#district-${district.code}`} title={`${district.nameKo} 보기`}>
+                {district.nameKo}
+              </a>
+            )}
+          </li>
+        ))}
+      </ul>
 
-    {isInteractive ? <ul class="dong-layer" data-dong-layer aria-label="선택된 구의 동"></ul> : null}
+      {isInteractive ? <ul class="dong-layer" data-dong-layer aria-label="선택된 구의 동"></ul> : null}
+    </div>
 
-    {isInteractive ? <button class="reset-btn" type="button" data-map-reset>전체 구 보기</button> : null}
+    {isInteractive ? (
+      <div class="selection-badge" data-map-selection hidden>
+        <strong data-map-selection-title></strong>
+        <span data-map-selection-count></span>
+      </div>
+    ) : null}
+
+    {isInteractive ? <button class="reset-btn" type="button" data-map-reset disabled>전체 구 보기</button> : null}
   </div>
 
   {isInteractive ? (
@@ -64,44 +71,82 @@ const districtPayload = districts.map((district) => ({
   <script>
     const root = document.querySelector('[data-map-root][data-map-mode="interactive"]');
 
-    if (root) {
-      const frame = root.querySelector('[data-map-frame]');
+    if (root instanceof HTMLElement) {
+      const scene = root.querySelector('[data-map-scene]');
       const districtButtons = Array.from(root.querySelectorAll('[data-district-btn]'));
       const dongLayer = root.querySelector('[data-dong-layer]');
       const resetButton = root.querySelector('[data-map-reset]');
+      const selection = root.querySelector('[data-map-selection]');
+      const selectionTitle = root.querySelector('[data-map-selection-title]');
+      const selectionCount = root.querySelector('[data-map-selection-count]');
       const jsonEl = root.querySelector('[data-map-districts]');
-
       const districts = jsonEl ? JSON.parse(jsonEl.textContent || '[]') : [];
+      const basePath = `${window.location.pathname}${window.location.search}`;
 
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+      const getScale = (district) => {
+        const edgeDistanceX = district.x > 50 ? 100 - district.x : district.x;
+        const edgeDistanceY = district.y > 50 ? 100 - district.y : district.y;
+        const edgeScale = Math.max(50 / edgeDistanceX, 50 / edgeDistanceY) + 0.12;
+        const densityScale = district.dongs.length > 12 ? 2.1 : district.dongs.length > 8 ? 2.25 : 2.35;
+
+        return clamp(Math.max(edgeScale, densityScale), 2.1, 3.2);
+      };
+
+      const setSceneTransform = (district) => {
+        if (!(scene instanceof HTMLElement)) return;
+
+        if (!district) {
+          scene.style.setProperty('--scene-scale', '1');
+          scene.style.setProperty('--scene-x', '0%');
+          scene.style.setProperty('--scene-y', '0%');
+          scene.style.setProperty('--overlay-scale', '1');
+          return;
+        }
+
+        const scale = getScale(district);
+        const minTranslate = 100 - 100 * scale;
+        const translateX = clamp(50 - district.x * scale, minTranslate, 0);
+        const translateY = clamp(50 - district.y * scale, minTranslate, 0);
+
+        scene.style.setProperty('--scene-scale', String(scale));
+        scene.style.setProperty('--scene-x', `${translateX}%`);
+        scene.style.setProperty('--scene-y', `${translateY}%`);
+        scene.style.setProperty('--overlay-scale', String(scale));
+      };
+
       const buildDongMarkers = (district) => {
-        if (!dongLayer) return;
+        if (!(dongLayer instanceof HTMLElement)) return;
+
         dongLayer.innerHTML = '';
 
+        const scale = getScale(district);
         const total = district.dongs.length;
-        district.dongs.forEach((dong, index) => {
-          const ring = Math.floor(index / 6);
-          const angle = ((Math.PI * 2) / 6) * (index % 6) + ring * 0.35;
-          const radiusX = 1.45 + ring * 1.35;
-          const radiusY = 1.15 + ring * 1.1;
+        const columns = total > 12 ? 4 : total > 6 ? 3 : total > 2 ? 2 : 1;
+        const rows = Math.ceil(total / columns);
+        const rowCounts = Array.from({ length: rows }, (_, row) => Math.min(columns, total - row * columns));
+        const gapX = clamp(7.6 / scale, 2.25, 3.45);
+        const gapY = clamp(6.2 / scale, 1.95, 2.8);
+        const yOffset = gapY * 0.45;
 
-          const x = clamp(district.x + Math.cos(angle) * radiusX, 4, 96);
-          const y = clamp(district.y + Math.sin(angle) * radiusY, 5, 95);
+        district.dongs.forEach((dong, index) => {
+          const row = Math.floor(index / columns);
+          const column = index % columns;
+          const itemsInRow = rowCounts[row];
+          const xOffset = (column - (itemsInRow - 1) / 2) * gapX + (row % 2 === 1 && itemsInRow > 1 ? gapX * 0.18 : 0);
+          const yOffsetFromCenter = (row - (rows - 1) / 2) * gapY + yOffset;
 
           const item = document.createElement('li');
-          item.style.left = `${x}%`;
-          item.style.top = `${y}%`;
+          item.style.left = `${clamp(district.x + xOffset, 6, 94)}%`;
+          item.style.top = `${clamp(district.y + yOffsetFromCenter, 6, 94)}%`;
+          item.style.setProperty('--dong-delay', `${index * 32}ms`);
 
           const link = document.createElement('a');
-          const hasPostPermalink = /instagram\.com\/(p|reel)\//.test(dong.postUrl || '');
-          link.href = hasPostPermalink ? dong.postUrl : `/dong/${dong.slug}`;
+          link.href = `/dong/${dong.slug}`;
           link.textContent = dong.nameKo;
-          link.title = hasPostPermalink ? `${dong.nameKo} 포스트 보기` : `${dong.nameKo} 기록 보기`;
-          if (hasPostPermalink) {
-            link.target = '_blank';
-            link.rel = 'noreferrer';
-          }
+          link.title = `${dong.nameKo} 기록 보기`;
+          link.setAttribute('aria-label', `${district.nameKo} ${dong.nameKo} 기록 보기`);
 
           item.appendChild(link);
           dongLayer.appendChild(item);
@@ -112,30 +157,35 @@ const districtPayload = districts.map((district) => ({
         const selected = districts.find((district) => district.code === code);
 
         districtButtons.forEach((button) => {
-          button.classList.toggle('active', button.dataset.districtCode === code);
+          const isActive = button.dataset.districtCode === code;
+          button.classList.toggle('active', isActive);
+          button.setAttribute('aria-pressed', String(isActive));
         });
 
-        if (!frame) return;
+        root.classList.toggle('has-selection', Boolean(selected));
+
+        if (!(resetButton instanceof HTMLButtonElement)) return;
+
+        resetButton.disabled = !selected;
 
         if (!selected) {
-          frame.classList.remove('is-zoomed');
-          frame.classList.remove('has-dongs');
-          frame.style.setProperty('--focus-x', '50%');
-          frame.style.setProperty('--focus-y', '50%');
-          if (dongLayer) dongLayer.innerHTML = '';
+          setSceneTransform(null);
+          if (dongLayer instanceof HTMLElement) dongLayer.innerHTML = '';
+          if (selection instanceof HTMLElement) selection.hidden = true;
           window.dispatchEvent(new CustomEvent('district-change', { detail: { code: '' } }));
-          history.replaceState(null, '', '/dong');
+          history.replaceState(null, '', basePath);
           return;
         }
 
-        frame.style.setProperty('--focus-x', `${selected.x}%`);
-        frame.style.setProperty('--focus-y', `${selected.y}%`);
-        requestAnimationFrame(() => frame.classList.add('is-zoomed'));
+        setSceneTransform(selected);
         buildDongMarkers(selected);
-        frame.classList.add('has-dongs');
+
+        if (selection instanceof HTMLElement) selection.hidden = false;
+        if (selectionTitle) selectionTitle.textContent = selected.nameKo;
+        if (selectionCount) selectionCount.textContent = `${selected.dongs.length}개 동`;
 
         window.dispatchEvent(new CustomEvent('district-change', { detail: { code: selected.code } }));
-        history.replaceState(null, '', `/dong#district-${selected.code}`);
+        history.replaceState(null, '', `${basePath}#district-${selected.code}`);
       };
 
       districtButtons.forEach((button) => {
@@ -146,7 +196,7 @@ const districtPayload = districts.map((district) => ({
         });
       });
 
-      resetButton?.addEventListener('click', () => applySelection(''));
+      resetButton.addEventListener('click', () => applySelection(''));
 
       const initialCode = location.hash.startsWith('#district-') ? location.hash.replace('#district-', '') : '';
       const isValid = districts.some((district) => district.code === initialCode);
@@ -167,21 +217,29 @@ const districtPayload = districts.map((district) => ({
   .map-frame {
     position: relative;
     aspect-ratio: 2598 / 2126;
+    overflow: hidden;
     background: #f7f4ee;
-    --focus-x: 50%;
-    --focus-y: 50%;
+  }
+
+  .map-scene {
+    position: absolute;
+    inset: 0;
+    --scene-scale: 1;
+    --scene-x: 0%;
+    --scene-y: 0%;
+    --overlay-scale: 1;
+    transform-origin: top left;
+    transform: translate(var(--scene-x), var(--scene-y)) scale(var(--scene-scale));
+    transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
   }
 
   .map-image {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform-origin 0.75s cubic-bezier(0.22, 1, 0.36, 1);
-    transform-origin: var(--focus-x) var(--focus-y);
-  }
-
-  .map-frame.is-zoomed .map-image {
-    transform: scale(1.32);
   }
 
   .district-layer,
@@ -191,20 +249,21 @@ const districtPayload = districts.map((district) => ({
     padding: 0;
     position: absolute;
     inset: 0;
+    pointer-events: none;
+  }
+
+  .district-layer {
     z-index: 2;
   }
 
   .dong-layer {
+    z-index: 3;
     opacity: 0;
-    transition: opacity 0.28s ease;
+    transition: opacity 0.24s ease;
   }
 
-  .map-frame.has-dongs .dong-layer {
+  .map-wrap.has-selection .dong-layer {
     opacity: 1;
-  }
-
-  .dong-layer li {
-    animation: dong-in 0.22s ease both;
   }
 
   .district-layer li,
@@ -214,81 +273,161 @@ const districtPayload = districts.map((district) => ({
   }
 
   .district-layer a,
+  .district-layer button,
+  .dong-layer a {
+    pointer-events: auto;
+    transform: scale(calc(1 / var(--overlay-scale)));
+    transform-origin: center;
+  }
+
+  .district-layer a,
   .district-layer button {
-    border: 1px solid rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(0, 0, 0, 0.24);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.92);
     color: #1f1c16;
     text-decoration: none;
-    padding: 0.28rem 0.5rem;
+    padding: 0.28rem 0.52rem;
     font-size: 0.65rem;
     line-height: 1;
     font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 10px 24px rgba(31, 25, 18, 0.08);
+  }
+
+  .map-wrap[data-map-mode='interactive'] .district-layer button {
+    border-color: rgba(31, 29, 25, 0.08);
+    background: rgba(255, 255, 255, 0.14);
+    color: transparent;
+    box-shadow: none;
   }
 
   .district-layer a:hover,
   .district-layer button:hover,
-  .district-layer button.active {
+  .district-layer button.active,
+  .district-layer button:focus-visible {
     background: #1f1d19;
     color: #faf8f2;
     border-color: #1f1d19;
+    box-shadow: 0 14px 30px rgba(31, 29, 25, 0.18);
+  }
+
+  .district-layer button:focus-visible,
+  .dong-layer a:focus-visible,
+  .reset-btn:focus-visible {
+    outline: 2px solid #1f1d19;
+    outline-offset: 2px;
+  }
+
+  .dong-layer li {
+    opacity: 0;
+    animation: dong-in 0.24s ease forwards;
+    animation-delay: var(--dong-delay, 0ms);
   }
 
   .dong-layer a {
     display: inline-block;
-    border: 1px solid #c8c0b1;
-    border-radius: 8px;
-    background: rgba(252, 251, 248, 0.95);
-    color: #2a261f;
+    border: 1px solid #cfc7b8;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #241f18;
     text-decoration: none;
-    padding: 0.2rem 0.36rem;
-    font-size: 0.58rem;
-    line-height: 1;
+    padding: 0.28rem 0.48rem;
+    font-size: 0.62rem;
+    line-height: 1.1;
+    font-weight: 700;
     white-space: nowrap;
+    box-shadow: 0 12px 28px rgba(31, 25, 18, 0.12);
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
 
   .dong-layer a:hover {
     border-color: #1f1d19;
+    background: #fffdf9;
+  }
+
+  .selection-badge,
+  .reset-btn {
+    position: absolute;
+    z-index: 4;
+    border: 1px solid #d6cfbf;
+    background: rgba(255, 255, 255, 0.94);
+    color: #1f1d19;
+    box-shadow: 0 12px 28px rgba(31, 25, 18, 0.1);
+  }
+
+  .selection-badge {
+    top: 0.8rem;
+    left: 0.8rem;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    border-radius: 999px;
+    padding: 0.38rem 0.7rem;
+  }
+
+  .selection-badge strong {
+    font-size: 0.78rem;
+  }
+
+  .selection-badge span {
+    font-size: 0.68rem;
+    color: #5d564a;
   }
 
   .reset-btn {
-    position: absolute;
-    left: 0.7rem;
-    bottom: 0.7rem;
-    z-index: 3;
-    border: 1px solid #cfc7b8;
+    left: 0.8rem;
+    bottom: 0.8rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
-    color: #1f1d19;
-    font-size: 0.66rem;
-    padding: 0.25rem 0.48rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.34rem 0.64rem;
     cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
   }
 
-  .reset-btn:hover {
+  .reset-btn:hover:not(:disabled) {
     border-color: #1f1d19;
+    background: #fffdf9;
+  }
+
+  .reset-btn:disabled {
+    opacity: 0.48;
+    cursor: default;
   }
 
   @media (max-width: 760px) {
     .district-layer a,
     .district-layer button {
-      font-size: 0.53rem;
-      padding: 0.18rem 0.31rem;
+      font-size: 0.55rem;
+      padding: 0.2rem 0.36rem;
     }
 
     .dong-layer a {
-      font-size: 0.5rem;
-      padding: 0.16rem 0.26rem;
+      font-size: 0.54rem;
+      padding: 0.22rem 0.36rem;
+    }
+
+    .selection-badge {
+      top: 0.6rem;
+      left: 0.6rem;
+      padding: 0.32rem 0.56rem;
+    }
+
+    .reset-btn {
+      left: 0.6rem;
+      bottom: 0.6rem;
+      font-size: 0.6rem;
+      padding: 0.28rem 0.5rem;
     }
   }
 
   @keyframes dong-in {
     from {
       opacity: 0;
-      transform: translate(-50%, -45%);
+      transform: translate(-50%, -42%);
     }
     to {
       opacity: 1;
