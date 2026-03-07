@@ -16,4 +16,4 @@ export const INSTAGRAM_POSTS_BY_DONG: Record<string, InstagramPost> = {
 };
 
 export const INSTAGRAM_POST_SOURCE = "fallback";
-export const INSTAGRAM_SYNCED_AT = "2026-03-07T05:05:50.038Z";
+export const INSTAGRAM_SYNCED_AT = "2026-03-07T05:13:07.349Z";

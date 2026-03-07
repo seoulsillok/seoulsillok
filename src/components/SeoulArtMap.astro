@@ -59,6 +59,13 @@ const districtPayload = districts.map((district) => ({
       </div>
     ) : null}
 
+    {isInteractive ? (
+      <aside class="dong-panel" data-dong-panel hidden>
+        <p class="dong-panel-label">Selected Dongs</p>
+        <div class="dong-panel-grid" data-dong-panel-grid></div>
+      </aside>
+    ) : null}
+
     {isInteractive ? <button class="reset-btn" type="button" data-map-reset disabled>전체 구 보기</button> : null}
   </div>
 
@@ -79,6 +86,8 @@ const districtPayload = districts.map((district) => ({
       const selection = root.querySelector('[data-map-selection]');
       const selectionTitle = root.querySelector('[data-map-selection-title]');
       const selectionCount = root.querySelector('[data-map-selection-count]');
+      const dongPanel = root.querySelector('[data-dong-panel]');
+      const dongPanelGrid = root.querySelector('[data-dong-panel-grid]');
       const jsonEl = root.querySelector('[data-map-districts]');
       const districts = jsonEl ? JSON.parse(jsonEl.textContent || '[]') : [];
       const basePath = `${window.location.pathname}${window.location.search}`;
@@ -120,6 +129,7 @@ const districtPayload = districts.map((district) => ({
         if (!(dongLayer instanceof HTMLElement)) return;
 
         dongLayer.innerHTML = '';
+        if (dongPanelGrid instanceof HTMLElement) dongPanelGrid.innerHTML = '';
 
         const scale = getScale(district);
         const total = district.dongs.length;
@@ -150,6 +160,15 @@ const districtPayload = districts.map((district) => ({
 
           item.appendChild(link);
           dongLayer.appendChild(item);
+
+          if (dongPanelGrid instanceof HTMLElement) {
+            const panelLink = document.createElement('a');
+            panelLink.href = link.href;
+            panelLink.textContent = dong.nameKo;
+            panelLink.title = link.title;
+            panelLink.setAttribute('aria-label', link.getAttribute('aria-label') || '');
+            dongPanelGrid.appendChild(panelLink);
+          }
         });
       };
 
@@ -172,6 +191,8 @@ const districtPayload = districts.map((district) => ({
           setSceneTransform(null);
           if (dongLayer instanceof HTMLElement) dongLayer.innerHTML = '';
           if (selection instanceof HTMLElement) selection.hidden = true;
+          if (dongPanel instanceof HTMLElement) dongPanel.hidden = true;
+          if (dongPanelGrid instanceof HTMLElement) dongPanelGrid.innerHTML = '';
           window.dispatchEvent(new CustomEvent('district-change', { detail: { code: '' } }));
           history.replaceState(null, '', basePath);
           return;
@@ -183,6 +204,7 @@ const districtPayload = districts.map((district) => ({
         if (selection instanceof HTMLElement) selection.hidden = false;
         if (selectionTitle) selectionTitle.textContent = selected.nameKo;
         if (selectionCount) selectionCount.textContent = `${selected.dongs.length}개 동`;
+        if (dongPanel instanceof HTMLElement) dongPanel.hidden = false;
 
         window.dispatchEvent(new CustomEvent('district-change', { detail: { code: selected.code } }));
         history.replaceState(null, '', `${basePath}#district-${selected.code}`);
@@ -284,7 +306,7 @@ const districtPayload = districts.map((district) => ({
   .district-layer button {
     border: 1px solid rgba(0, 0, 0, 0.24);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 253, 249, 0.96);
     color: #1f1c16;
     text-decoration: none;
     padding: 0.28rem 0.52rem;
@@ -298,10 +320,10 @@ const districtPayload = districts.map((district) => ({
   }
 
   .map-wrap[data-map-mode='interactive'] .district-layer button {
-    border-color: rgba(31, 29, 25, 0.08);
-    background: rgba(255, 255, 255, 0.14);
-    color: transparent;
-    box-shadow: none;
+    border-color: rgba(31, 29, 25, 0.16);
+    background: rgba(255, 252, 247, 0.98);
+    color: #1f1d19;
+    box-shadow: 0 10px 24px rgba(31, 25, 18, 0.12);
   }
 
   .district-layer a:hover,
@@ -349,6 +371,7 @@ const districtPayload = districts.map((district) => ({
   }
 
   .selection-badge,
+  .dong-panel,
   .reset-btn {
     position: absolute;
     z-index: 4;
@@ -375,6 +398,51 @@ const districtPayload = districts.map((district) => ({
   .selection-badge span {
     font-size: 0.68rem;
     color: #5d564a;
+  }
+
+  .dong-panel {
+    right: 0.8rem;
+    top: 0.8rem;
+    width: min(35%, 18rem);
+    border-radius: 18px;
+    padding: 0.8rem;
+    backdrop-filter: blur(6px);
+  }
+
+  .dong-panel-label {
+    margin: 0 0 0.55rem;
+    color: #6a6258;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .dong-panel-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+  }
+
+  .dong-panel-grid a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    border: 1px solid #dbd3c4;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #241f18;
+    text-decoration: none;
+    padding: 0.3rem 0.58rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .dong-panel-grid a:hover {
+    border-color: #1f1d19;
+    background: #fffdf9;
   }
 
   .reset-btn {
@@ -414,6 +482,20 @@ const districtPayload = districts.map((district) => ({
       top: 0.6rem;
       left: 0.6rem;
       padding: 0.32rem 0.56rem;
+    }
+
+    .dong-panel {
+      left: 0.6rem;
+      right: 0.6rem;
+      top: auto;
+      bottom: 2.9rem;
+      width: auto;
+      padding: 0.6rem;
+    }
+
+    .dong-panel-grid a {
+      min-height: 1.85rem;
+      font-size: 0.68rem;
     }
 
     .reset-btn {
