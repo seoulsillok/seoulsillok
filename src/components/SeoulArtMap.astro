@@ -48,9 +48,9 @@ const districtPayload = districts.map((district) => ({
           </li>
         ))}
       </ul>
-
-      {isInteractive ? <ul class="dong-layer" data-dong-layer aria-label="선택된 구의 동"></ul> : null}
     </div>
+
+    {isInteractive ? <ul class="dong-layer" data-dong-layer aria-label="선택된 구의 동"></ul> : null}
 
     {isInteractive ? (
       <div class="selection-badge" data-map-selection hidden>
@@ -131,26 +131,26 @@ const districtPayload = districts.map((district) => ({
         dongLayer.innerHTML = '';
         if (dongPanelGrid instanceof HTMLElement) dongPanelGrid.innerHTML = '';
 
-        const scale = getScale(district);
         const total = district.dongs.length;
-        const columns = total > 12 ? 4 : total > 6 ? 3 : total > 2 ? 2 : 1;
+        const columns = total > 12 ? 4 : total > 8 ? 3 : total > 4 ? 2 : 1;
         const rows = Math.ceil(total / columns);
         const rowCounts = Array.from({ length: rows }, (_, row) => Math.min(columns, total - row * columns));
-        const gapX = clamp(7.6 / scale, 2.25, 3.45);
-        const gapY = clamp(6.2 / scale, 1.95, 2.8);
-        const yOffset = gapY * 0.45;
+        const gapX = columns === 4 ? 13 : columns === 3 ? 14.5 : columns === 2 ? 16 : 0;
+        const gapY = total > 10 ? 8.2 : total > 6 ? 9 : 10;
+        const centerY = total > 10 ? 56 : 55;
 
         district.dongs.forEach((dong, index) => {
           const row = Math.floor(index / columns);
           const column = index % columns;
           const itemsInRow = rowCounts[row];
-          const xOffset = (column - (itemsInRow - 1) / 2) * gapX + (row % 2 === 1 && itemsInRow > 1 ? gapX * 0.18 : 0);
-          const yOffsetFromCenter = (row - (rows - 1) / 2) * gapY + yOffset;
+          const xOffset = (column - (itemsInRow - 1) / 2) * gapX;
+          const yOffsetFromCenter = (row - (rows - 1) / 2) * gapY;
 
           const item = document.createElement('li');
-          item.style.left = `${clamp(district.x + xOffset, 6, 94)}%`;
-          item.style.top = `${clamp(district.y + yOffsetFromCenter, 6, 94)}%`;
+          item.style.left = `${clamp(50 + xOffset, 12, 88)}%`;
+          item.style.top = `${clamp(centerY + yOffsetFromCenter, 20, 84)}%`;
           item.style.setProperty('--dong-delay', `${index * 32}ms`);
+          item.style.setProperty('--dong-line', `${Math.max(16, Math.abs(yOffsetFromCenter) * 5 + 18)}px`);
 
           const link = document.createElement('a');
           link.href = `/dong/${dong.slug}`;
@@ -295,8 +295,7 @@ const districtPayload = districts.map((district) => ({
   }
 
   .district-layer a,
-  .district-layer button,
-  .dong-layer a {
+  .district-layer button {
     pointer-events: auto;
     transform: scale(calc(1 / var(--overlay-scale)));
     transform-origin: center;
@@ -349,25 +348,38 @@ const districtPayload = districts.map((district) => ({
     animation-delay: var(--dong-delay, 0ms);
   }
 
+  .dong-layer li::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 0.12rem);
+    width: 1px;
+    height: var(--dong-line, 20px);
+    background: linear-gradient(180deg, rgba(31, 29, 25, 0.32), rgba(31, 29, 25, 0));
+    transform: translateX(-50%);
+  }
+
   .dong-layer a {
     display: inline-block;
     border: 1px solid #cfc7b8;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.94);
+    border-radius: 999px;
+    background: rgba(255, 253, 249, 0.98);
     color: #241f18;
     text-decoration: none;
-    padding: 0.28rem 0.48rem;
-    font-size: 0.62rem;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.82rem;
     line-height: 1.1;
     font-weight: 700;
     white-space: nowrap;
-    box-shadow: 0 12px 28px rgba(31, 25, 18, 0.12);
-    transition: border-color 0.2s ease, background 0.2s ease;
+    pointer-events: auto;
+    box-shadow: 0 16px 34px rgba(31, 25, 18, 0.14);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   }
 
   .dong-layer a:hover {
     border-color: #1f1d19;
     background: #fffdf9;
+    transform: translateY(-1px);
   }
 
   .selection-badge,
@@ -398,6 +410,15 @@ const districtPayload = districts.map((district) => ({
   .selection-badge span {
     font-size: 0.68rem;
     color: #5d564a;
+  }
+
+  .map-wrap.has-selection .district-layer button:not(.active) {
+    opacity: 0.24;
+  }
+
+  .map-wrap.has-selection .district-layer button.active {
+    position: relative;
+    z-index: 1;
   }
 
   .dong-panel {
@@ -474,8 +495,8 @@ const districtPayload = districts.map((district) => ({
     }
 
     .dong-layer a {
-      font-size: 0.54rem;
-      padding: 0.22rem 0.36rem;
+      font-size: 0.64rem;
+      padding: 0.34rem 0.52rem;
     }
 
     .selection-badge {
