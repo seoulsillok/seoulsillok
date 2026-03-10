@@ -191,11 +191,13 @@ const districtPayload = districts.map((district) => {
 
         district.dongs.forEach((dong, index) => {
           const item = document.createElement('li');
+          item.className = 'map-dong-item';
           item.style.left = `${clamp(dong.labelX, 2, 98)}%`;
           item.style.top = `${clamp(dong.labelY, 2, 98)}%`;
           item.style.setProperty('--dong-delay', `${index * 18}ms`);
 
           const link = document.createElement('a');
+          link.className = 'map-dong-link';
           link.href = `/dong/${dong.slug}`;
           link.textContent = dong.nameKo;
           link.title = `${dong.nameKo} 기록 보기`;
@@ -206,6 +208,7 @@ const districtPayload = districts.map((district) => {
 
           if (dongPanelGrid instanceof HTMLElement) {
             const panelLink = document.createElement('a');
+            panelLink.className = 'map-dong-panel-link';
             panelLink.href = link.href;
             panelLink.textContent = dong.nameKo;
             panelLink.title = link.title;
@@ -362,14 +365,14 @@ const districtPayload = districts.map((district) => {
   }
 
   .district-layer li,
-  .dong-layer li {
+  :global(.map-dong-item) {
     position: absolute;
     transform: translate(-50%, -50%);
   }
 
   .district-layer a,
   .district-layer button,
-  .dong-layer a {
+  :global(.map-dong-link) {
     pointer-events: auto;
     transform-origin: center;
     transform: scale(calc(1 / var(--overlay-scale)));
@@ -410,20 +413,20 @@ const districtPayload = districts.map((district) => {
   }
 
   .district-layer button:focus-visible,
-  .dong-layer a:focus-visible,
+  :global(.map-dong-link:focus-visible),
   .reset-btn:focus-visible,
   .map-feature:focus-visible {
     outline: 2px solid #1f1d19;
     outline-offset: 2px;
   }
 
-  .dong-layer li {
+  :global(.map-dong-item) {
     opacity: 0;
     animation: dong-in 0.24s ease forwards;
     animation-delay: var(--dong-delay, 0ms);
   }
 
-  .dong-layer a {
+  :global(.map-dong-link) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -442,7 +445,7 @@ const districtPayload = districts.map((district) => {
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   }
 
-  .dong-layer a:hover {
+  :global(.map-dong-link:hover) {
     border-color: #1f1d19;
     background: #fffdf9;
     transform: scale(calc(1 / var(--overlay-scale))) translateY(-1px);
@@ -521,7 +524,7 @@ const districtPayload = districts.map((district) => {
     gap: 0.38rem;
   }
 
-  .dong-panel-grid a {
+  :global(.map-dong-panel-link) {
     display: inline-flex;
     align-items: center;
     min-height: 2rem;
@@ -537,7 +540,7 @@ const districtPayload = districts.map((district) => {
     transition: border-color 0.2s ease, background 0.2s ease;
   }
 
-  .dong-panel-grid a:hover {
+  :global(.map-dong-panel-link:hover) {
     border-color: #1f1d19;
     background: #fffdf9;
   }
@@ -570,7 +573,7 @@ const districtPayload = districts.map((district) => {
       padding: 0.2rem 0.36rem;
     }
 
-    .dong-layer a {
+    :global(.map-dong-link) {
       min-height: 1.45rem;
       font-size: 0.55rem;
       padding: 0.18rem 0.32rem;
@@ -591,7 +594,7 @@ const districtPayload = districts.map((district) => {
       padding: 0.6rem;
     }
 
-    .dong-panel-grid a {
+    :global(.map-dong-panel-link) {
       min-height: 1.85rem;
       font-size: 0.68rem;
     }
