@@ -1,5 +1,6 @@
 ---
 import type { SeoulDistrict } from '../data/seoul';
+import { SEOUL_MAP } from '../data/seoul-map.js';
 
 interface Props {
   districts: SeoulDistrict[];
@@ -9,22 +10,63 @@ interface Props {
 const { districts, mode = 'link' } = Astro.props;
 const isInteractive = mode === 'interactive';
 
-const districtPayload = districts.map((district) => ({
-  code: district.code,
-  nameKo: district.nameKo,
-  x: district.map.x,
-  y: district.map.y,
-  dongs: district.dongs.map((dong, index) => ({
-    nameKo: dong,
-    slug: `${district.code}-${index + 1}`
-  }))
-}));
+const mapFeatureBySlug = new Map(SEOUL_MAP.features.map((feature) => [feature.slug, feature]));
+const districtMapByCode = new Map(SEOUL_MAP.districts.map((district) => [district.code, district]));
+
+const districtPayload = districts.map((district) => {
+  const mapDistrict = districtMapByCode.get(district.code);
+
+  return {
+    code: district.code,
+    nameKo: district.nameKo,
+    x: district.map.x,
+    y: district.map.y,
+    centerX: mapDistrict?.centerX ?? district.map.x,
+    centerY: mapDistrict?.centerY ?? district.map.y,
+    minX: mapDistrict?.minX ?? Math.max(0, district.map.x - 8),
+    maxX: mapDistrict?.maxX ?? Math.min(100, district.map.x + 8),
+    minY: mapDistrict?.minY ?? Math.max(0, district.map.y - 8),
+    maxY: mapDistrict?.maxY ?? Math.min(100, district.map.y + 8),
+    dongs: district.dongs.map((dong, index) => {
+      const slug = `${district.code}-${index + 1}`;
+      const mapFeature = mapFeatureBySlug.get(slug);
+
+      return {
+        nameKo: dong,
+        slug,
+        labelX: mapFeature?.labelXPercent ?? 50,
+        labelY: mapFeature?.labelYPercent ?? 50
+      };
+    })
+  };
+});
 ---
 
 <section class="map-wrap" aria-label="서울 지도" data-map-root data-map-mode={mode}>
-  <div class="map-frame" data-map-frame>
+  <div class="map-frame" data-map-frame style={`aspect-ratio:${SEOUL_MAP.width} / ${SEOUL_MAP.height};`}>
     <div class="map-scene" data-map-scene>
-      <img src="/images/seoul_map.jpg" alt="서울 지도" loading="lazy" class="map-image" />
+      <svg
+        class="map-svg"
+        viewBox={`0 0 ${SEOUL_MAP.width} ${SEOUL_MAP.height}`}
+        aria-label="서울 동 경계 지도"
+        role="img"
+      >
+        <title>서울 동 경계 지도</title>
+
+        {SEOUL_MAP.features.map((feature) => (
+          <a
+            href={`/dong/${feature.slug}`}
+            class="map-feature"
+            data-map-feature
+            data-district-code={feature.districtCode}
+            data-dong-slug={feature.slug}
+            title={`${feature.districtKo} ${feature.nameKo} 기록 보기`}
+            aria-label={`${feature.districtKo} ${feature.nameKo} 기록 보기`}
+          >
+            <path d={feature.path} fill-rule="evenodd"></path>
+          </a>
+        ))}
+      </svg>
 
       <ul class="district-layer" aria-label="서울 구 선택" data-district-layer>
         {districts.map((district) => (
@@ -48,9 +90,9 @@ const districtPayload = districts.map((district) => ({
           </li>
         ))}
       </ul>
-    </div>
 
-    {isInteractive ? <ul class="dong-layer" data-dong-layer aria-label="선택된 구의 동"></ul> : null}
+      {isInteractive ? <ul class="dong-layer" data-dong-layer aria-label="선택된 구의 동"></ul> : null}
+    </div>
 
     {isInteractive ? (
       <div class="selection-badge" data-map-selection hidden>
@@ -71,7 +113,7 @@ const districtPayload = districts.map((district) => ({
 
   {isInteractive ? (
     <p class="map-note">
-      현재 배경 지도는 구 단위 아트워크입니다. 동 이름은 실제 경계 위 좌표가 아니라 선택한 구의 목록 오버레이로 표시됩니다.
+      동 이름은 실제 경계 중심점을 기준으로 표시됩니다. 현재 지도는 법정동과 행정동 경계를 함께 사용해 앱의 동 목록과 맞췄습니다.
     </p>
   ) : null}
 
@@ -87,6 +129,7 @@ const districtPayload = districts.map((district) => ({
     if (root instanceof HTMLElement) {
       const scene = root.querySelector('[data-map-scene]');
       const districtButtons = Array.from(root.querySelectorAll('[data-district-btn]'));
+      const mapFeatures = Array.from(root.querySelectorAll('[data-map-feature]'));
       const dongLayer = root.querySelector('[data-dong-layer]');
       const resetButton = root.querySelector('[data-map-reset]');
       const selection = root.querySelector('[data-map-selection]');
@@ -101,12 +144,13 @@ const districtPayload = districts.map((district) => ({
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
       const getScale = (district) => {
-        const edgeDistanceX = district.x > 50 ? 100 - district.x : district.x;
-        const edgeDistanceY = district.y > 50 ? 100 - district.y : district.y;
-        const edgeScale = Math.max(50 / edgeDistanceX, 50 / edgeDistanceY) + 0.12;
-        const densityScale = district.dongs.length > 12 ? 2.1 : district.dongs.length > 8 ? 2.25 : 2.35;
+        const width = district.maxX - district.minX;
+        const height = district.maxY - district.minY;
+        const padding = district.dongs.length > 12 ? 8 : district.dongs.length > 8 ? 10 : 12;
+        const scaleX = 100 / Math.min(100, width + padding);
+        const scaleY = 100 / Math.min(100, height + padding);
 
-        return clamp(Math.max(edgeScale, densityScale), 2.1, 3.2);
+        return clamp(Math.min(scaleX, scaleY), 1.45, 4.1);
       };
 
       const setSceneTransform = (district) => {
@@ -122,13 +166,21 @@ const districtPayload = districts.map((district) => ({
 
         const scale = getScale(district);
         const minTranslate = 100 - 100 * scale;
-        const translateX = clamp(50 - district.x * scale, minTranslate, 0);
-        const translateY = clamp(50 - district.y * scale, minTranslate, 0);
+        const translateX = clamp(50 - district.centerX * scale, minTranslate, 0);
+        const translateY = clamp(50 - district.centerY * scale, minTranslate, 0);
 
         scene.style.setProperty('--scene-scale', String(scale));
         scene.style.setProperty('--scene-x', `${translateX}%`);
         scene.style.setProperty('--scene-y', `${translateY}%`);
         scene.style.setProperty('--overlay-scale', String(scale));
+      };
+
+      const updateFeatureState = (code) => {
+        mapFeatures.forEach((feature) => {
+          const isActive = Boolean(code) && feature.dataset.districtCode === code;
+          feature.classList.toggle('active', isActive);
+          feature.classList.toggle('inactive', Boolean(code) && !isActive);
+        });
       };
 
       const buildDongMarkers = (district) => {
@@ -137,26 +189,11 @@ const districtPayload = districts.map((district) => ({
         dongLayer.innerHTML = '';
         if (dongPanelGrid instanceof HTMLElement) dongPanelGrid.innerHTML = '';
 
-        const total = district.dongs.length;
-        const columns = total > 12 ? 4 : total > 8 ? 3 : total > 4 ? 2 : 1;
-        const rows = Math.ceil(total / columns);
-        const rowCounts = Array.from({ length: rows }, (_, row) => Math.min(columns, total - row * columns));
-        const gapX = columns === 4 ? 13 : columns === 3 ? 14.5 : columns === 2 ? 16 : 0;
-        const gapY = total > 10 ? 8.2 : total > 6 ? 9 : 10;
-        const centerY = total > 10 ? 56 : 55;
-
         district.dongs.forEach((dong, index) => {
-          const row = Math.floor(index / columns);
-          const column = index % columns;
-          const itemsInRow = rowCounts[row];
-          const xOffset = (column - (itemsInRow - 1) / 2) * gapX;
-          const yOffsetFromCenter = (row - (rows - 1) / 2) * gapY;
-
           const item = document.createElement('li');
-          item.style.left = `${clamp(50 + xOffset, 12, 88)}%`;
-          item.style.top = `${clamp(centerY + yOffsetFromCenter, 20, 84)}%`;
-          item.style.setProperty('--dong-delay', `${index * 32}ms`);
-          item.style.setProperty('--dong-line', `${Math.max(16, Math.abs(yOffsetFromCenter) * 5 + 18)}px`);
+          item.style.left = `${clamp(dong.labelX, 2, 98)}%`;
+          item.style.top = `${clamp(dong.labelY, 2, 98)}%`;
+          item.style.setProperty('--dong-delay', `${index * 18}ms`);
 
           const link = document.createElement('a');
           link.href = `/dong/${dong.slug}`;
@@ -188,6 +225,7 @@ const districtPayload = districts.map((district) => ({
         });
 
         root.classList.toggle('has-selection', Boolean(selected));
+        updateFeatureState(selected?.code || '');
 
         if (!(resetButton instanceof HTMLButtonElement)) return;
 
@@ -209,7 +247,7 @@ const districtPayload = districts.map((district) => ({
 
         if (selection instanceof HTMLElement) selection.hidden = false;
         if (selectionTitle) selectionTitle.textContent = selected.nameKo;
-        if (selectionCount) selectionCount.textContent = `${selected.dongs.length}개 동 목록`;
+        if (selectionCount) selectionCount.textContent = `${selected.dongs.length}개 동`;
         if (dongPanel instanceof HTMLElement) dongPanel.hidden = false;
 
         window.dispatchEvent(new CustomEvent('district-change', { detail: { code: selected.code } }));
@@ -239,14 +277,15 @@ const districtPayload = districts.map((district) => ({
     border-radius: 20px;
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.12);
-    background: #fbf9f5;
+    background: #fbf7ef;
   }
 
   .map-frame {
     position: relative;
-    aspect-ratio: 2598 / 2126;
     overflow: hidden;
-    background: #f7f4ee;
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0) 42%),
+      linear-gradient(180deg, #f8f2e8 0%, #f3ede2 100%);
   }
 
   .map-scene {
@@ -262,12 +301,40 @@ const districtPayload = districts.map((district) => ({
     will-change: transform;
   }
 
-  .map-image {
+  .map-svg {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    overflow: visible;
+  }
+
+  .map-feature {
+    pointer-events: auto;
+  }
+
+  .map-feature path {
+    fill: #e8dfcf;
+    stroke: rgba(255, 252, 246, 0.95);
+    stroke-width: 1.1;
+    vector-effect: non-scaling-stroke;
+    transition: fill 0.24s ease, opacity 0.24s ease, filter 0.24s ease;
+  }
+
+  .map-feature:hover path,
+  .map-feature:focus-visible path {
+    fill: #d9bf8c;
+    filter: brightness(1.01);
+  }
+
+  .map-wrap.has-selection .map-feature.inactive path {
+    fill: #efe9de;
+    opacity: 0.34;
+  }
+
+  .map-wrap.has-selection .map-feature.active path {
+    fill: #d6b476;
+    opacity: 1;
   }
 
   .district-layer,
@@ -301,10 +368,11 @@ const districtPayload = districts.map((district) => ({
   }
 
   .district-layer a,
-  .district-layer button {
+  .district-layer button,
+  .dong-layer a {
     pointer-events: auto;
-    transform: scale(calc(1 / var(--overlay-scale)));
     transform-origin: center;
+    transform: scale(calc(1 / var(--overlay-scale)));
   }
 
   .district-layer a,
@@ -343,7 +411,8 @@ const districtPayload = districts.map((district) => ({
 
   .district-layer button:focus-visible,
   .dong-layer a:focus-visible,
-  .reset-btn:focus-visible {
+  .reset-btn:focus-visible,
+  .map-feature:focus-visible {
     outline: 2px solid #1f1d19;
     outline-offset: 2px;
   }
@@ -354,38 +423,29 @@ const districtPayload = districts.map((district) => ({
     animation-delay: var(--dong-delay, 0ms);
   }
 
-  .dong-layer li::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: calc(100% + 0.12rem);
-    width: 1px;
-    height: var(--dong-line, 20px);
-    background: linear-gradient(180deg, rgba(31, 29, 25, 0.32), rgba(31, 29, 25, 0));
-    transform: translateX(-50%);
-  }
-
   .dong-layer a {
-    display: inline-block;
-    border: 1px solid #cfc7b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.7rem;
+    border: 1px solid rgba(70, 58, 33, 0.16);
     border-radius: 999px;
-    background: rgba(255, 253, 249, 0.98);
+    background: rgba(255, 253, 249, 0.94);
     color: #241f18;
     text-decoration: none;
-    padding: 0.42rem 0.72rem;
-    font-size: 0.82rem;
-    line-height: 1.1;
+    padding: 0.24rem 0.42rem;
+    font-size: 0.66rem;
+    line-height: 1;
     font-weight: 700;
     white-space: nowrap;
-    pointer-events: auto;
-    box-shadow: 0 16px 34px rgba(31, 25, 18, 0.14);
+    box-shadow: 0 10px 22px rgba(31, 25, 18, 0.12);
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   }
 
   .dong-layer a:hover {
     border-color: #1f1d19;
     background: #fffdf9;
-    transform: translateY(-1px);
+    transform: scale(calc(1 / var(--overlay-scale))) translateY(-1px);
   }
 
   .selection-badge,
@@ -440,7 +500,7 @@ const districtPayload = districts.map((district) => ({
   .dong-panel {
     right: 0.8rem;
     top: 0.8rem;
-    width: min(35%, 18rem);
+    width: min(36%, 18rem);
     border-radius: 18px;
     padding: 0.8rem;
     backdrop-filter: blur(6px);
@@ -511,8 +571,9 @@ const districtPayload = districts.map((district) => ({
     }
 
     .dong-layer a {
-      font-size: 0.64rem;
-      padding: 0.34rem 0.52rem;
+      min-height: 1.45rem;
+      font-size: 0.55rem;
+      padding: 0.18rem 0.32rem;
     }
 
     .selection-badge {
