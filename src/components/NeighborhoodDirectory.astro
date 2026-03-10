@@ -1,0 +1,209 @@
+---
+import SeoulArtMap from './SeoulArtMap.astro';
+import { ALL_DONGS, DISTRICTS, getLocalizedDistrictName, getLocalizedDongName } from '../data/seoul';
+
+interface Props {
+  id?: string;
+}
+
+const { id } = Astro.props;
+---
+
+<section class="directory-shell" id={id} data-directory-root>
+  <div class="map-area">
+    <SeoulArtMap districts={DISTRICTS} mode="interactive" />
+  </div>
+
+  <section class="status-bar" aria-live="polite">
+    <p><strong data-selected-label></strong> · <span data-visible-copy data-total={ALL_DONGS.length}></span></p>
+  </section>
+
+  <section class="district-grid">
+    {DISTRICTS.map((district) => (
+      <article
+        class="district-card"
+        id={`district-${district.code}`}
+        data-district-card
+        data-district-code={district.code}
+        data-district-name-ko={district.nameKo}
+        data-district-name-en={getLocalizedDistrictName(district, 'en')}
+        data-dongs={district.dongs.length}
+      >
+        <header>
+          <h2>
+            <span data-copy-locale="ko">{district.nameKo}</span>
+            <span data-copy-locale="en">{getLocalizedDistrictName(district, 'en')}</span>
+          </h2>
+          <small>
+            <span data-copy-locale="ko">{district.dongs.length}개 동네</span>
+            <span data-copy-locale="en">{district.dongs.length} dongs</span>
+          </small>
+        </header>
+        <ul>
+          {district.dongs.map((dong, index) => (
+            <li>
+              <a href={`/dong/${district.code}-${index + 1}`}>
+                <strong>
+                  <span data-copy-locale="ko">{dong}</span>
+                  <span data-copy-locale="en">{getLocalizedDongName(dong, 'en')}</span>
+                </strong>
+                <span data-copy-locale="ko">기록 보기</span>
+                <span data-copy-locale="en">View record</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </article>
+    ))}
+  </section>
+</section>
+
+<script>
+  const directoryRoots = Array.from(document.querySelectorAll('[data-directory-root]'));
+
+  directoryRoots.forEach((root) => {
+    if (!(root instanceof HTMLElement) || root.dataset.directoryInitialized === 'true') return;
+    root.dataset.directoryInitialized = 'true';
+
+    const cards = Array.from(root.querySelectorAll('[data-district-card]'));
+    const selectedLabel = root.querySelector('[data-selected-label]');
+    const visibleCopy = root.querySelector('[data-visible-copy]');
+    let activeCode = '';
+
+    const getLocale = () => (document.documentElement.dataset.siteLocale === 'en' ? 'en' : 'ko');
+    const getDistrictName = (card) =>
+      getLocale() === 'en' ? card.dataset.districtNameEn || card.dataset.districtNameKo || '' : card.dataset.districtNameKo || '';
+    const getDefaultLabel = () => (getLocale() === 'en' ? 'All' : '전체');
+    const getFallbackLabel = () => (getLocale() === 'en' ? 'Selected' : '선택');
+    const formatVisibleCopy = (count) => (getLocale() === 'en' ? `${count} dongs shown` : `${count}개 동네 표시 중`);
+
+    const applySelection = (code) => {
+      const normalized = code || '';
+      activeCode = normalized;
+
+      let count = 0;
+      cards.forEach((card) => {
+        const isMatch = !normalized || card.dataset.districtCode === normalized;
+        card.hidden = !isMatch;
+        if (isMatch) {
+          count += Number(card.dataset.dongs || 0);
+        }
+      });
+
+      if (selectedLabel instanceof HTMLElement) {
+        const selectedCard = cards.find((card) => card.dataset.districtCode === normalized);
+        selectedLabel.textContent = normalized ? selectedCard ? getDistrictName(selectedCard) : getFallbackLabel() : getDefaultLabel();
+      }
+
+      if (visibleCopy instanceof HTMLElement) {
+        const total = Number(visibleCopy.dataset.total || 0);
+        visibleCopy.textContent = formatVisibleCopy(count || total);
+      }
+    };
+
+    window.addEventListener('district-change', (event) => {
+      const code = event?.detail?.code || '';
+      applySelection(code);
+    });
+
+    window.addEventListener('site-locale-change', () => {
+      applySelection(activeCode);
+    });
+
+    const initialCode = location.hash.startsWith('#district-') ? location.hash.replace('#district-', '') : '';
+    const isValid = cards.some((card) => card.dataset.districtCode === initialCode);
+    applySelection(isValid ? initialCode : '');
+  });
+</script>
+
+<style>
+  .map-area {
+    margin-top: 1rem;
+  }
+
+  .status-bar {
+    margin-top: 0.85rem;
+    color: #4d463d;
+    font-size: 0.92rem;
+  }
+
+  .status-bar p {
+    margin: 0;
+  }
+
+  .district-grid {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .district-card {
+    border: 1px solid #e4dfd4;
+    border-radius: 16px;
+    padding: 0.95rem;
+    background: #fffdf9;
+  }
+
+  .district-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  h2 {
+    margin: 0;
+    color: #1f1d18;
+    font-size: 1.15rem;
+  }
+
+  header small {
+    color: #6a6258;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.42rem;
+  }
+
+  li a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid #e7e1d6;
+    border-radius: 10px;
+    text-decoration: none;
+    padding: 0.44rem 0.56rem;
+    color: #24211c;
+    font-size: 0.84rem;
+    background: #ffffff;
+  }
+
+  li a:hover {
+    border-color: #1f1d19;
+  }
+
+  li span {
+    color: #70685d;
+    font-size: 0.72rem;
+  }
+
+  @media (max-width: 960px) {
+    .district-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    ul {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

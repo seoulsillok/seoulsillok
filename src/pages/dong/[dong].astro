@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { findDongBySlug, getDistrictByCode, ALL_DONGS, SOCIAL_LINKS } from '../../data/seoul';
+import { ALL_DONGS, SOCIAL_LINKS, findDongBySlug, getDistrictByCode, getLocalizedDistrictName, getLocalizedDongName } from '../../data/seoul';
 import { INSTAGRAM_POSTS_BY_DONG, INSTAGRAM_PROFILE_URL } from '../../data/instagram-posts.generated';
 
 export async function getStaticPaths() {
@@ -10,6 +10,8 @@ export async function getStaticPaths() {
 const slug = String(Astro.params.dong || '');
 const record = findDongBySlug(slug);
 const district = record ? getDistrictByCode(record.districtCode) : undefined;
+const districtNameEn = record ? getLocalizedDistrictName({ code: record.districtCode, nameKo: record.districtKo }, 'en') : '';
+const dongNameEn = record ? getLocalizedDongName(record.nameKo, 'en') : '';
 
 const instagramPost = record ? INSTAGRAM_POSTS_BY_DONG[record.nameKo] : undefined;
 const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPost.url) : false;
@@ -19,8 +21,14 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
   {record ? (
     <article class="detail">
       <p class="eyebrow">INSTAGRAM ARCHIVE</p>
-      <h1>{record.nameKo}</h1>
-      <p class="meta">{record.districtKo}</p>
+      <h1>
+        <span data-copy-locale="ko">{record.nameKo}</span>
+        <span data-copy-locale="en">{dongNameEn}</span>
+      </h1>
+      <p class="meta">
+        <span data-copy-locale="ko">{record.districtKo}</span>
+        <span data-copy-locale="en">{districtNameEn}</span>
+      </p>
 
       {instagramPost ? (
         <section class="post-card" aria-label="인스타그램 포스트">
@@ -58,7 +66,7 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
           </p>
           <p class="note" data-copy-locale="en">
             No Instagram post has been matched to this dong yet.
-            If you publish a caption containing the keyword {record.nameKo}, it will be linked automatically.
+            If you publish a caption containing the keyword "{record.nameKo}" ({dongNameEn}), it will be linked automatically.
           </p>
           <a href={INSTAGRAM_PROFILE_URL} target="_blank" rel="noreferrer">
             <span data-copy-locale="ko">@seoulsillok 프로필 열기</span>
@@ -68,9 +76,9 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
       )}
 
       <section class="actions">
-        <a href={`/dong#district-${record.districtCode}`}>
+        <a href={`/#district-${record.districtCode}`}>
           <span data-copy-locale="ko">← {record.districtKo} 목록으로</span>
-          <span data-copy-locale="en">← Back to {record.districtKo}</span>
+          <span data-copy-locale="en">← Back to {districtNameEn}</span>
         </a>
         <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">
           <span data-copy-locale="ko">서울실록 인스타그램</span>
@@ -81,11 +89,14 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
       {district ? (
         <section class="related">
           <h2 data-copy-locale="ko">{record.districtKo}의 다른 동네</h2>
-          <h2 data-copy-locale="en">Other neighborhoods in {record.districtKo}</h2>
+          <h2 data-copy-locale="en">Other neighborhoods in {districtNameEn}</h2>
           <ul>
             {district.dongs.map((dong, index) => (
               <li>
-                <a href={`/dong/${district.code}-${index + 1}`} class:list={[{ active: dong === record.nameKo }]}>{dong}</a>
+                <a href={`/dong/${district.code}-${index + 1}`} class:list={[{ active: dong === record.nameKo }]}>
+                  <span data-copy-locale="ko">{dong}</span>
+                  <span data-copy-locale="en">{getLocalizedDongName(dong, 'en')}</span>
+                </a>
               </li>
             ))}
           </ul>
@@ -96,12 +107,12 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
     <article class="detail">
       <h1 data-copy-locale="ko">존재하지 않는 동네 페이지입니다.</h1>
       <h1 data-copy-locale="en">This neighborhood page does not exist.</h1>
-      <p class="note" data-copy-locale="ko">요청한 경로를 찾을 수 없습니다. 동네 목록으로 이동해 주세요.</p>
-      <p class="note" data-copy-locale="en">The requested path could not be found. Please go back to the neighborhood directory.</p>
+      <p class="note" data-copy-locale="ko">요청한 경로를 찾을 수 없습니다. 홈의 동네 목록으로 이동해 주세요.</p>
+      <p class="note" data-copy-locale="en">The requested path could not be found. Please go back to the directory on the homepage.</p>
       <section class="actions">
-        <a href="/dong">
-          <span data-copy-locale="ko">서울 동네 목록으로 이동</span>
-          <span data-copy-locale="en">Go to the neighborhood directory</span>
+        <a href="/">
+          <span data-copy-locale="ko">홈으로 이동</span>
+          <span data-copy-locale="en">Go to homepage</span>
         </a>
       </section>
     </article>

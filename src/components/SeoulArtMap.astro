@@ -1,5 +1,6 @@
 ---
 import type { SeoulDistrict } from '../data/seoul';
+import { getDistrictEnglishNameByCode, getLocalizedDongName } from '../data/seoul';
 import { SEOUL_MAP } from '../data/seoul-map.js';
 
 interface Props {
@@ -19,6 +20,7 @@ const districtPayload = districts.map((district) => {
   return {
     code: district.code,
     nameKo: district.nameKo,
+    nameEn: getDistrictEnglishNameByCode(district.code),
     x: district.map.x,
     y: district.map.y,
     centerX: mapDistrict?.centerX ?? district.map.x,
@@ -33,6 +35,7 @@ const districtPayload = districts.map((district) => {
 
       return {
         nameKo: dong,
+        nameEn: getLocalizedDongName(dong, 'en'),
         slug,
         labelX: mapFeature?.labelXPercent ?? 50,
         labelY: mapFeature?.labelYPercent ?? 50
@@ -62,6 +65,8 @@ const districtPayload = districts.map((district) => {
             data-dong-slug={feature.slug}
             data-dong-name={feature.nameKo}
             data-district-name={feature.districtKo}
+            data-dong-name-en={getLocalizedDongName(feature.nameKo, 'en')}
+            data-district-name-en={getDistrictEnglishNameByCode(feature.districtCode)}
             title={`${feature.districtKo} ${feature.nameKo} 기록 보기`}
             aria-label={`${feature.districtKo} ${feature.nameKo} 기록 보기`}
           >
@@ -82,12 +87,20 @@ const districtPayload = districts.map((district) => {
                 data-district-btn
                 data-district-code={district.code}
                 data-district-name={district.nameKo}
+                data-district-name-en={getDistrictEnglishNameByCode(district.code)}
               >
-                {district.nameKo}
+                <span data-copy-locale="ko">{district.nameKo}</span>
+                <span data-copy-locale="en">{getDistrictEnglishNameByCode(district.code)}</span>
               </button>
             ) : (
-              <a href={`/dong#district-${district.code}`} title={`${district.nameKo} 보기`} data-district-name={district.nameKo}>
-                {district.nameKo}
+              <a
+                href={`/#district-${district.code}`}
+                title={`${district.nameKo} 보기`}
+                data-district-name={district.nameKo}
+                data-district-name-en={getDistrictEnglishNameByCode(district.code)}
+              >
+                <span data-copy-locale="ko">{district.nameKo}</span>
+                <span data-copy-locale="en">{getDistrictEnglishNameByCode(district.code)}</span>
               </a>
             )}
           </li>
@@ -157,19 +170,24 @@ const districtPayload = districts.map((district) => {
 
     const getLocale = () => (document.documentElement.dataset.siteLocale === 'en' ? 'en' : 'ko');
     const formatDongCount = (count) => (getLocale() === 'en' ? `${count} dongs` : `${count}개 동`);
+    const getDistrictDisplayName = (district) => (getLocale() === 'en' ? district.nameEn : district.nameKo);
+    const getDongDisplayName = (dong) => (getLocale() === 'en' ? dong.nameEn : dong.nameKo);
     const getDongRecordLabel = (districtName, dongName) =>
       getLocale() === 'en' ? `View ${districtName} ${dongName}` : `${districtName} ${dongName} 기록 보기`;
     const getDistrictLabel = (districtName) => (getLocale() === 'en' ? `View ${districtName}` : `${districtName} 보기`);
 
     const syncStaticLabels = () => {
       mapFeatures.forEach((feature) => {
-        const label = getDongRecordLabel(feature.dataset.districtName || '', feature.dataset.dongName || '');
+        const districtName = getLocale() === 'en' ? feature.dataset.districtNameEn || '' : feature.dataset.districtName || '';
+        const dongName = getLocale() === 'en' ? feature.dataset.dongNameEn || '' : feature.dataset.dongName || '';
+        const label = getDongRecordLabel(districtName, dongName);
         feature.setAttribute('title', label);
         feature.setAttribute('aria-label', label);
       });
 
       districtControls.forEach((control) => {
-        const label = getDistrictLabel(control.dataset.districtName || '');
+        const districtName = getLocale() === 'en' ? control.dataset.districtNameEn || '' : control.dataset.districtName || '';
+        const label = getDistrictLabel(districtName);
         control.setAttribute('title', label);
         control.setAttribute('aria-label', label);
       });
@@ -179,11 +197,11 @@ const districtPayload = districts.map((district) => {
       if (!(hoverBadge instanceof HTMLElement) || !(feature instanceof Element)) return;
 
       if (hoverTitle instanceof HTMLElement) {
-        hoverTitle.textContent = feature.dataset.dongName || '';
+        hoverTitle.textContent = getLocale() === 'en' ? feature.dataset.dongNameEn || '' : feature.dataset.dongName || '';
       }
 
       if (hoverSubtitle instanceof HTMLElement) {
-        hoverSubtitle.textContent = feature.dataset.districtName || '';
+        hoverSubtitle.textContent = getLocale() === 'en' ? feature.dataset.districtNameEn || '' : feature.dataset.districtName || '';
       }
 
       hoverBadge.hidden = false;
@@ -276,9 +294,9 @@ const districtPayload = districts.map((district) => {
           const link = document.createElement('a');
           link.className = 'map-dong-link';
           link.href = `/dong/${dong.slug}`;
-          link.textContent = dong.nameKo;
-          link.title = getDongRecordLabel(district.nameKo, dong.nameKo);
-          link.setAttribute('aria-label', getDongRecordLabel(district.nameKo, dong.nameKo));
+          link.textContent = getDongDisplayName(dong);
+          link.title = getDongRecordLabel(getDistrictDisplayName(district), getDongDisplayName(dong));
+          link.setAttribute('aria-label', getDongRecordLabel(getDistrictDisplayName(district), getDongDisplayName(dong)));
 
           item.appendChild(link);
           dongLayer.appendChild(item);
@@ -287,7 +305,7 @@ const districtPayload = districts.map((district) => {
             const panelLink = document.createElement('a');
             panelLink.className = 'map-dong-panel-link';
             panelLink.href = link.href;
-            panelLink.textContent = dong.nameKo;
+            panelLink.textContent = getDongDisplayName(dong);
             panelLink.title = link.title;
             panelLink.setAttribute('aria-label', link.getAttribute('aria-label') || '');
             dongPanelGrid.appendChild(panelLink);
@@ -327,7 +345,7 @@ const districtPayload = districts.map((district) => {
         buildDongMarkers(selected);
 
         if (selection instanceof HTMLElement) selection.hidden = false;
-        if (selectionTitle) selectionTitle.textContent = selected.nameKo;
+        if (selectionTitle) selectionTitle.textContent = getDistrictDisplayName(selected);
         if (selectionCount) selectionCount.textContent = formatDongCount(selected.dongs.length);
         if (dongPanel instanceof HTMLElement) dongPanel.hidden = false;
 
@@ -352,6 +370,7 @@ const districtPayload = districts.map((district) => {
         if (!selected) return;
 
         buildDongMarkers(selected);
+        if (selectionTitle) selectionTitle.textContent = getDistrictDisplayName(selected);
         if (selectionCount) selectionCount.textContent = formatDongCount(selected.dongs.length);
       });
 

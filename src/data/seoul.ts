@@ -12,6 +12,92 @@ export const SOCIAL_LINKS = {
   instagram: 'https://www.instagram.com/seoulsillok/'
 };
 
+const DISTRICT_NAME_EN_BY_CODE: Record<string, string> = {
+  gangnam: 'Gangnam-gu',
+  gangdong: 'Gangdong-gu',
+  gangbuk: 'Gangbuk-gu',
+  gangseo: 'Gangseo-gu',
+  gwanak: 'Gwanak-gu',
+  gwangjin: 'Gwangjin-gu',
+  guro: 'Guro-gu',
+  geumcheon: 'Geumcheon-gu',
+  nowon: 'Nowon-gu',
+  dobong: 'Dobong-gu',
+  dongdaemun: 'Dongdaemun-gu',
+  dongjak: 'Dongjak-gu',
+  mapo: 'Mapo-gu',
+  seodaemun: 'Seodaemun-gu',
+  seocho: 'Seocho-gu',
+  seongdong: 'Seongdong-gu',
+  seongbuk: 'Seongbuk-gu',
+  songpa: 'Songpa-gu',
+  yangcheon: 'Yangcheon-gu',
+  yeongdeungpo: 'Yeongdeungpo-gu',
+  yongsan: 'Yongsan-gu',
+  eunpyeong: 'Eunpyeong-gu',
+  jongno: 'Jongno-gu',
+  jung: 'Jung-gu',
+  jungnang: 'Jungnang-gu'
+};
+
+const HANGUL_BASE = 0xac00;
+const HANGUL_LAST = 0xd7a3;
+const INITIALS = ['g', 'kk', 'n', 'd', 'tt', 'r', 'm', 'b', 'pp', 's', 'ss', '', 'j', 'jj', 'ch', 'k', 't', 'p', 'h'];
+const MEDIALS = ['a', 'ae', 'ya', 'yae', 'eo', 'e', 'yeo', 'ye', 'o', 'wa', 'wae', 'oe', 'yo', 'u', 'wo', 'we', 'wi', 'yu', 'eu', 'ui', 'i'];
+const FINALS = ['', 'k', 'k', 'k', 'n', 'n', 'n', 't', 'l', 'k', 'm', 'l', 'l', 'l', 'p', 'l', 'm', 'p', 'p', 't', 't', 'ng', 't', 't', 'k', 't', 'p', 't'];
+
+function isHangulSyllable(char: string) {
+  if (!char) return false;
+  const codePoint = char.codePointAt(0) || 0;
+  return codePoint >= HANGUL_BASE && codePoint <= HANGUL_LAST;
+}
+
+function romanizeHangulText(value: string) {
+  return Array.from(value)
+    .map((char) => {
+      if (!isHangulSyllable(char)) return char;
+
+      const offset = (char.codePointAt(0) || 0) - HANGUL_BASE;
+      const initialIndex = Math.floor(offset / 588);
+      const medialIndex = Math.floor((offset % 588) / 28);
+      const finalIndex = offset % 28;
+
+      return `${INITIALS[initialIndex]}${MEDIALS[medialIndex]}${FINALS[finalIndex]}`;
+    })
+    .join('');
+}
+
+function capitalizeRomanizedWords(value: string) {
+  return value
+    .replace(/([A-Za-z])(\d)/g, '$1 $2')
+    .replace(/(^|[\s-])([a-z])/g, (_, prefix, char) => `${prefix}${char.toUpperCase()}`);
+}
+
+export function romanizePlaceName(nameKo: string) {
+  const suffixMatch = nameKo.match(/^(.*?)(구|동|가)$/);
+
+  if (suffixMatch) {
+    const [, stem, suffix] = suffixMatch;
+    const romanizedStem = capitalizeRomanizedWords(romanizeHangulText(stem));
+    const romanizedSuffix = romanizeHangulText(suffix).toLowerCase();
+    return `${romanizedStem}-${romanizedSuffix}`;
+  }
+
+  return capitalizeRomanizedWords(romanizeHangulText(nameKo));
+}
+
+export function getDistrictEnglishNameByCode(code: string) {
+  return DISTRICT_NAME_EN_BY_CODE[code] || '';
+}
+
+export function getLocalizedDistrictName(district: Pick<SeoulDistrict, 'code' | 'nameKo'>, locale: 'ko' | 'en') {
+  return locale === 'en' ? getDistrictEnglishNameByCode(district.code) || romanizePlaceName(district.nameKo) : district.nameKo;
+}
+
+export function getLocalizedDongName(nameKo: string, locale: 'ko' | 'en') {
+  return locale === 'en' ? romanizePlaceName(nameKo) : nameKo;
+}
+
 export const DISTRICTS: SeoulDistrict[] = [
   {
     code: 'gangnam',

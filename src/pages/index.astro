@@ -1,9 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import SeoulArtMap from '../components/SeoulArtMap.astro';
-import { ALL_DONGS, DISTRICTS, SOCIAL_LINKS } from '../data/seoul';
-
-const featured = ALL_DONGS.slice(0, 9);
+import NeighborhoodDirectory from '../components/NeighborhoodDirectory.astro';
+import { SOCIAL_LINKS } from '../data/seoul';
 ---
 
 <Layout title="서울 실록" description="서울 전체 동네를 감각적으로 기록하는 아카이브">
@@ -20,41 +18,22 @@ const featured = ALL_DONGS.slice(0, 9);
       Select a district and jump directly to the linked neighborhood pages.
     </p>
     <div class="hero-cta">
-      <a href="/dong" class="btn dark">
+      <a href="#home-directory" class="btn dark">
         <span data-copy-locale="ko">지도에서 탐색하기</span>
-        <span data-copy-locale="en">Explore the map</span>
+        <span data-copy-locale="en">Explore on this page</span>
       </a>
       <a href={SOCIAL_LINKS.instagram} class="btn light" target="_blank" rel="noreferrer">@seoulsillok</a>
     </div>
   </section>
 
-  <section class="map-block">
+  <section class="map-block" id="home-directory">
     <header>
-      <h2 data-copy-locale="ko">서울 지도</h2>
-      <h2 data-copy-locale="en">Seoul Map</h2>
-      <p data-copy-locale="ko">구를 선택하면 해당 구 섹션으로 이동합니다.</p>
-      <p data-copy-locale="en">Select a district to jump to its section.</p>
+      <h2 data-copy-locale="ko">서울 동네 탐색</h2>
+      <h2 data-copy-locale="en">Explore Seoul Neighborhoods</h2>
+      <p data-copy-locale="ko">지도에서 구를 선택하면 같은 페이지 안에서 해당 구만 확대되고, 아래 목록도 함께 필터링됩니다.</p>
+      <p data-copy-locale="en">Select a district on the map to zoom in and filter the directory below without leaving the homepage.</p>
     </header>
-    <SeoulArtMap districts={DISTRICTS} />
-  </section>
-
-  <section class="featured">
-    <header>
-      <h2 data-copy-locale="ko">빠른 이동</h2>
-      <h2 data-copy-locale="en">Quick Access</h2>
-      <p data-copy-locale="ko">{DISTRICTS.length}개 구 · {ALL_DONGS.length}개 동네</p>
-      <p data-copy-locale="en">{DISTRICTS.length} districts · {ALL_DONGS.length} dongs</p>
-    </header>
-    <div class="cards">
-      {featured.map((dong) => (
-        <a class="card" href={`/dong/${dong.slug}`}>
-          <small>{dong.districtKo}</small>
-          <h3>{dong.nameKo}</h3>
-          <span data-copy-locale="ko">페이지 보기</span>
-          <span data-copy-locale="en">View page</span>
-        </a>
-      ))}
-    </div>
+    <NeighborhoodDirectory />
   </section>
 </Layout>
 
@@ -116,67 +95,15 @@ const featured = ALL_DONGS.slice(0, 9);
     margin-top: 1rem;
   }
 
-  .map-block h2,
-  .featured h2 {
+  .map-block h2 {
     margin: 0;
     font-family: 'Fraunces', serif;
     color: #201d18;
     font-size: clamp(1.4rem, 3vw, 2rem);
   }
 
-  .map-block p,
-  .featured p {
+  .map-block p {
     margin: 0.45rem 0 0.8rem;
     color: #60584d;
-  }
-
-  .featured {
-    margin-top: 1.8rem;
-  }
-
-  .cards {
-    margin-top: 0.8rem;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.65rem;
-  }
-
-  .card {
-    padding: 0.84rem;
-    border-radius: 12px;
-    text-decoration: none;
-    color: #201d18;
-    border: 1px solid #e1dbcf;
-    background: #fff;
-  }
-
-  .card:hover {
-    border-color: #1f1d19;
-  }
-
-  .card small {
-    color: #6a6256;
-  }
-
-  .card h3 {
-    margin: 0.2rem 0 0.62rem;
-    font-size: 1rem;
-  }
-
-  .card span {
-    font-size: 0.78rem;
-    color: #6a6256;
-  }
-
-  @media (max-width: 900px) {
-    .cards {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 560px) {
-    .cards {
-      grid-template-columns: 1fr;
-    }
   }
 </style>
