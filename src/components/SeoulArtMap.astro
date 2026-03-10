@@ -61,13 +61,19 @@ const districtPayload = districts.map((district) => ({
 
     {isInteractive ? (
       <aside class="dong-panel" data-dong-panel hidden>
-        <p class="dong-panel-label">Selected Dongs</p>
+        <p class="dong-panel-label">선택한 동 목록</p>
         <div class="dong-panel-grid" data-dong-panel-grid></div>
       </aside>
     ) : null}
 
     {isInteractive ? <button class="reset-btn" type="button" data-map-reset disabled>전체 구 보기</button> : null}
   </div>
+
+  {isInteractive ? (
+    <p class="map-note">
+      현재 배경 지도는 구 단위 아트워크입니다. 동 이름은 실제 경계 위 좌표가 아니라 선택한 구의 목록 오버레이로 표시됩니다.
+    </p>
+  ) : null}
 
   {isInteractive ? (
     <script type="application/json" data-map-districts set:html={JSON.stringify(districtPayload)}></script>
@@ -203,7 +209,7 @@ const districtPayload = districts.map((district) => ({
 
         if (selection instanceof HTMLElement) selection.hidden = false;
         if (selectionTitle) selectionTitle.textContent = selected.nameKo;
-        if (selectionCount) selectionCount.textContent = `${selected.dongs.length}개 동`;
+        if (selectionCount) selectionCount.textContent = `${selected.dongs.length}개 동 목록`;
         if (dongPanel instanceof HTMLElement) dongPanel.hidden = false;
 
         window.dispatchEvent(new CustomEvent('district-change', { detail: { code: selected.code } }));
@@ -410,6 +416,16 @@ const districtPayload = districts.map((district) => ({
   .selection-badge span {
     font-size: 0.68rem;
     color: #5d564a;
+  }
+
+  .map-note {
+    margin: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0.8rem 1rem 0.95rem;
+    color: #625b4e;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    background: rgba(255, 252, 246, 0.85);
   }
 
   .map-wrap.has-selection .district-layer button:not(.active) {
