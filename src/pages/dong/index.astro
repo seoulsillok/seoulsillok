@@ -7,10 +7,15 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
 <Layout title="서울 동네 아카이브" description="서울 25개 구 동네 목록과 지도 탐색">
   <section class="intro">
     <p class="eyebrow">SEOUL DONG DIRECTORY</p>
-    <h1>서울 동네 기록</h1>
-    <p>
+    <h1 data-copy-locale="ko">서울 동네 기록</h1>
+    <h1 data-copy-locale="en">Seoul Neighborhood Directory</h1>
+    <p data-copy-locale="ko">
       지도 위 구 라벨을 클릭하면 해당 구만 확대되고,
       그 구에 속한 동 이름이 실제 영역 위에 표시되며 패널에서도 바로 각 동 페이지로 이동할 수 있습니다.
+    </p>
+    <p data-copy-locale="en">
+      Click a district label on the map to zoom into that district only.
+      Dong names appear over their actual regions, and you can also open each dong page from the panel.
     </p>
   </section>
 
@@ -19,7 +24,7 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
   </section>
 
   <section class="status-bar" aria-live="polite">
-    <p><strong data-selected-label>전체</strong> · <span data-visible-count data-total={ALL_DONGS.length}>{ALL_DONGS.length}</span>개 동네 표시 중</p>
+    <p><strong data-selected-label></strong> · <span data-visible-copy data-total={ALL_DONGS.length}></span></p>
   </section>
 
   <section class="district-grid">
@@ -27,14 +32,18 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
       <article class="district-card" id={`district-${district.code}`} data-district-card data-district-code={district.code} data-dongs={district.dongs.length}>
         <header>
           <h2>{district.nameKo}</h2>
-          <small>{district.dongs.length}개 동네</small>
+          <small>
+            <span data-copy-locale="ko">{district.dongs.length}개 동네</span>
+            <span data-copy-locale="en">{district.dongs.length} dongs</span>
+          </small>
         </header>
         <ul>
           {district.dongs.map((dong, index) => (
             <li>
               <a href={`/dong/${district.code}-${index + 1}`}>
                 <strong>{dong}</strong>
-                <span>기록 보기</span>
+                <span data-copy-locale="ko">기록 보기</span>
+                <span data-copy-locale="en">View record</span>
               </a>
             </li>
           ))}
@@ -47,7 +56,7 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
 <script>
   const cards = Array.from(document.querySelectorAll('[data-district-card]'));
   const selectedLabel = document.querySelector('[data-selected-label]');
-  const visibleCount = document.querySelector('[data-visible-count]');
+  const visibleCopy = document.querySelector('[data-visible-copy]');
 
   const districtNameByCode = new Map(
     cards.map((card) => [
@@ -56,8 +65,19 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
     ])
   );
 
+  let activeCode = '';
+
+  function getLocale() {
+    return document.documentElement.dataset.siteLocale === 'en' ? 'en' : 'ko';
+  }
+
+  function formatVisibleCopy(count) {
+    return getLocale() === 'en' ? `${count} dongs shown` : `${count}개 동네 표시 중`;
+  }
+
   function applySelection(code) {
     const normalized = code || '';
+    activeCode = normalized;
 
     let count = 0;
     cards.forEach((card) => {
@@ -69,17 +89,22 @@ import { ALL_DONGS, DISTRICTS } from '../../data/seoul';
     });
 
     if (selectedLabel) {
-      selectedLabel.textContent = normalized ? districtNameByCode.get(normalized) || '선택' : '전체';
+      selectedLabel.textContent = normalized ? districtNameByCode.get(normalized) || (getLocale() === 'en' ? 'Selected' : '선택') : getLocale() === 'en' ? 'All' : '전체';
     }
 
-    if (visibleCount) {
-      visibleCount.textContent = String(count || Number(visibleCount.dataset.total || 0));
+    if (visibleCopy) {
+      const total = Number(visibleCopy.dataset.total || 0);
+      visibleCopy.textContent = formatVisibleCopy(count || total);
     }
   }
 
   window.addEventListener('district-change', (event) => {
     const code = event?.detail?.code || '';
     applySelection(code);
+  });
+
+  window.addEventListener('site-locale-change', () => {
+    applySelection(activeCode);
   });
 
   const initialCode = location.hash.startsWith('#district-') ? location.hash.replace('#district-', '') : '';

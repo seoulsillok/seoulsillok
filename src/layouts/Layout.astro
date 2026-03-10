@@ -13,7 +13,7 @@ const {
 ---
 
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-site-locale="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -21,6 +21,19 @@ const {
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title} | 서울 실록</title>
+    <script is:inline>
+      (() => {
+        const storageKey = 'seoul-sillok-locale';
+        let locale = 'ko';
+
+        try {
+          locale = localStorage.getItem(storageKey) === 'en' ? 'en' : 'ko';
+        } catch {}
+
+        document.documentElement.dataset.siteLocale = locale;
+        document.documentElement.lang = locale;
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -32,12 +45,28 @@ const {
           <span class="logo-mark">SS</span>
           <span>Seoul Sillok</span>
         </a>
-        <nav>
-          <a href="/">홈</a>
-          <a href="/manifesto">선언문</a>
-          <a href="/dong">서울 동네</a>
-          <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a>
-        </nav>
+        <div class="header-actions">
+          <nav>
+            <a href="/">
+              <span data-copy-locale="ko">홈</span>
+              <span data-copy-locale="en">Home</span>
+            </a>
+            <a href="/manifesto">
+              <span data-copy-locale="ko">선언문</span>
+              <span data-copy-locale="en">Manifesto</span>
+            </a>
+            <a href="/dong">
+              <span data-copy-locale="ko">서울 동네</span>
+              <span data-copy-locale="en">Neighborhoods</span>
+            </a>
+            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a>
+          </nav>
+
+          <div class="locale-switch" role="group" aria-label="Language switch">
+            <button type="button" data-site-locale-btn data-locale="ko">한국어</button>
+            <button type="button" data-site-locale-btn data-locale="en">English</button>
+          </div>
+        </div>
       </div>
     </header>
     <main>
@@ -47,10 +76,61 @@ const {
       <p>서울 실록 Seoul Sillok</p>
       <small>&copy; {new Date().getFullYear()} All rights reserved.</small>
     </footer>
+    <script is:inline>
+      (() => {
+        const storageKey = 'seoul-sillok-locale';
+        const root = document.documentElement;
+        const buttons = Array.from(document.querySelectorAll('[data-site-locale-btn]'));
+
+        const normalizeLocale = (value) => (value === 'en' ? 'en' : 'ko');
+
+        const applyLocale = (value, persist) => {
+          const locale = normalizeLocale(value);
+          root.dataset.siteLocale = locale;
+          root.lang = locale;
+
+          buttons.forEach((button) => {
+            const isActive = button.dataset.locale === locale;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+          });
+
+          if (persist) {
+            try {
+              localStorage.setItem(storageKey, locale);
+            } catch {}
+          }
+
+          window.dispatchEvent(new CustomEvent('site-locale-change', { detail: { locale } }));
+        };
+
+        buttons.forEach((button) => {
+          button.addEventListener('click', () => applyLocale(button.dataset.locale || 'ko', true));
+        });
+
+        applyLocale(root.dataset.siteLocale || 'ko', false);
+      })();
+    </script>
   </body>
 </html>
 
 <style>
+  :global([data-copy-locale='en']) {
+    display: none !important;
+  }
+
+  :global(html[data-site-locale='en'] [data-copy-locale='ko']) {
+    display: none !important;
+  }
+
+  :global(html[data-site-locale='en'] [data-copy-locale='en']) {
+    display: revert !important;
+  }
+
+  :global(html[data-site-locale='ko'] [data-copy-locale='ko']) {
+    display: revert !important;
+  }
+
   :root {
     --bg: #f4f1ea;
     --surface: #fffdf9;
@@ -124,6 +204,14 @@ const {
     flex-wrap: wrap;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+  }
+
   nav a {
     color: var(--muted);
     text-decoration: none;
@@ -132,6 +220,39 @@ const {
 
   nav a:hover {
     color: var(--text);
+  }
+
+  .locale-switch {
+    display: inline-flex;
+    gap: 0.2rem;
+    padding: 0.2rem;
+    border: 1px solid #d8d0c1;
+    border-radius: 999px;
+    background: rgba(255, 252, 246, 0.94);
+  }
+
+  .locale-switch button {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    padding: 0.38rem 0.68rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .locale-switch button:hover,
+  .locale-switch button:focus-visible {
+    background: rgba(31, 29, 25, 0.08);
+    color: var(--text);
+    outline: none;
+  }
+
+  .locale-switch button.active {
+    background: #1f1d19;
+    color: #faf8f2;
   }
 
   main {
@@ -163,6 +284,11 @@ const {
     .header-inner {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .header-actions {
+      width: 100%;
+      justify-content: space-between;
     }
 
     main {

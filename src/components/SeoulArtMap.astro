@@ -81,11 +81,12 @@ const districtPayload = districts.map((district) => {
                 aria-pressed="false"
                 data-district-btn
                 data-district-code={district.code}
+                data-district-name={district.nameKo}
               >
                 {district.nameKo}
               </button>
             ) : (
-              <a href={`/dong#district-${district.code}`} title={`${district.nameKo} 보기`}>
+              <a href={`/dong#district-${district.code}`} title={`${district.nameKo} 보기`} data-district-name={district.nameKo}>
                 {district.nameKo}
               </a>
             )}
@@ -112,17 +113,26 @@ const districtPayload = districts.map((district) => {
 
     {isInteractive ? (
       <aside class="dong-panel" data-dong-panel hidden>
-        <p class="dong-panel-label">선택한 동 목록</p>
+        <p class="dong-panel-label">
+          <span data-copy-locale="ko">선택한 동 목록</span>
+          <span data-copy-locale="en">Selected dongs</span>
+        </p>
         <div class="dong-panel-grid" data-dong-panel-grid></div>
       </aside>
     ) : null}
 
-    {isInteractive ? <button class="reset-btn" type="button" data-map-reset disabled>전체 구 보기</button> : null}
+    {isInteractive ? (
+      <button class="reset-btn" type="button" data-map-reset disabled>
+        <span data-copy-locale="ko">전체 구 보기</span>
+        <span data-copy-locale="en">Back to full map</span>
+      </button>
+    ) : null}
   </div>
 
   {isInteractive ? (
     <p class="map-note">
-      동 이름은 실제 경계 중심점을 기준으로 표시됩니다. 현재 지도는 법정동과 행정동 경계를 함께 사용해 앱의 동 목록과 맞췄습니다.
+      <span data-copy-locale="ko">동 이름은 실제 경계 중심점을 기준으로 표시됩니다. 현재 지도는 법정동과 행정동 경계를 함께 사용해 앱의 동 목록과 맞췄습니다.</span>
+      <span data-copy-locale="en">Dong names are placed from the centroids of their mapped regions. This map combines legal and administrative dong boundaries so it matches the dong list used in the app.</span>
     </p>
   ) : null}
 
@@ -139,9 +149,31 @@ const districtPayload = districts.map((district) => {
     root.dataset.mapInitialized = 'true';
 
     const mapFeatures = Array.from(root.querySelectorAll('[data-map-feature]'));
+    const districtControls = Array.from(root.querySelectorAll('[data-district-name]'));
     const hoverBadge = root.querySelector('[data-map-hover]');
     const hoverTitle = root.querySelector('[data-map-hover-title]');
     const hoverSubtitle = root.querySelector('[data-map-hover-subtitle]');
+    let activeDistrictCode = '';
+
+    const getLocale = () => (document.documentElement.dataset.siteLocale === 'en' ? 'en' : 'ko');
+    const formatDongCount = (count) => (getLocale() === 'en' ? `${count} dongs` : `${count}개 동`);
+    const getDongRecordLabel = (districtName, dongName) =>
+      getLocale() === 'en' ? `View ${districtName} ${dongName}` : `${districtName} ${dongName} 기록 보기`;
+    const getDistrictLabel = (districtName) => (getLocale() === 'en' ? `View ${districtName}` : `${districtName} 보기`);
+
+    const syncStaticLabels = () => {
+      mapFeatures.forEach((feature) => {
+        const label = getDongRecordLabel(feature.dataset.districtName || '', feature.dataset.dongName || '');
+        feature.setAttribute('title', label);
+        feature.setAttribute('aria-label', label);
+      });
+
+      districtControls.forEach((control) => {
+        const label = getDistrictLabel(control.dataset.districtName || '');
+        control.setAttribute('title', label);
+        control.setAttribute('aria-label', label);
+      });
+    };
 
     const showHoverBadge = (feature) => {
       if (!(hoverBadge instanceof HTMLElement) || !(feature instanceof Element)) return;
@@ -167,6 +199,9 @@ const districtPayload = districts.map((district) => {
       feature.addEventListener('pointerleave', hideHoverBadge);
       feature.addEventListener('blur', hideHoverBadge);
     });
+
+    syncStaticLabels();
+    window.addEventListener('site-locale-change', syncStaticLabels);
 
     if (root.dataset.mapMode !== 'interactive') return;
 
@@ -242,8 +277,8 @@ const districtPayload = districts.map((district) => {
           link.className = 'map-dong-link';
           link.href = `/dong/${dong.slug}`;
           link.textContent = dong.nameKo;
-          link.title = `${dong.nameKo} 기록 보기`;
-          link.setAttribute('aria-label', `${district.nameKo} ${dong.nameKo} 기록 보기`);
+          link.title = getDongRecordLabel(district.nameKo, dong.nameKo);
+          link.setAttribute('aria-label', getDongRecordLabel(district.nameKo, dong.nameKo));
 
           item.appendChild(link);
           dongLayer.appendChild(item);
@@ -262,6 +297,7 @@ const districtPayload = districts.map((district) => {
 
       const applySelection = (code) => {
         const selected = districts.find((district) => district.code === code);
+        activeDistrictCode = selected?.code || '';
 
         districtButtons.forEach((button) => {
           const isActive = button.dataset.districtCode === code;
@@ -292,7 +328,7 @@ const districtPayload = districts.map((district) => {
 
         if (selection instanceof HTMLElement) selection.hidden = false;
         if (selectionTitle) selectionTitle.textContent = selected.nameKo;
-        if (selectionCount) selectionCount.textContent = `${selected.dongs.length}개 동`;
+        if (selectionCount) selectionCount.textContent = formatDongCount(selected.dongs.length);
         if (dongPanel instanceof HTMLElement) dongPanel.hidden = false;
 
         window.dispatchEvent(new CustomEvent('district-change', { detail: { code: selected.code } }));
@@ -310,6 +346,14 @@ const districtPayload = districts.map((district) => {
       if (resetButton instanceof HTMLButtonElement) {
         resetButton.addEventListener('click', () => applySelection(''));
       }
+
+      window.addEventListener('site-locale-change', () => {
+        const selected = districts.find((district) => district.code === activeDistrictCode);
+        if (!selected) return;
+
+        buildDongMarkers(selected);
+        if (selectionCount) selectionCount.textContent = formatDongCount(selected.dongs.length);
+      });
 
       const initialCode = location.hash.startsWith('#district-') ? location.hash.replace('#district-', '') : '';
       const isValid = districts.some((district) => district.code === initialCode);

@@ -1,55 +1,29 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { MANIFESTO } from '../data/manifesto';
-
-const languageOptions = [
-  { code: 'ko', label: '한국어' },
-  { code: 'en', label: 'Eng ver' }
-] as const;
 ---
 
 <Layout title="선언문" description="서울실록 프로젝트의 예술적, 철학적 선언문">
-  <section class="manifesto-page" data-manifesto-root>
+  <section class="manifesto-page">
     <header class="page-header">
-      <div class="page-copy">
-        <div data-manifesto-copy="ko">
-          <p class="eyebrow">PROJECT MANIFESTO</p>
-          <h1>서울실록 선언문</h1>
-          <p class="page-summary">{MANIFESTO.ko.summary}</p>
-        </div>
-
-        <div data-manifesto-copy="en" hidden>
-          <p class="eyebrow">PROJECT MANIFESTO</p>
-          <h1>Seoul Sillok Manifesto</h1>
-          <p class="page-summary">{MANIFESTO.en.summary}</p>
-        </div>
+      <div class="page-copy" data-copy-locale="ko">
+        <p class="eyebrow">PROJECT MANIFESTO</p>
+        <h1>서울실록 선언문</h1>
+        <p class="page-summary">{MANIFESTO.ko.summary}</p>
       </div>
 
-      <div class="language-switch" role="tablist" aria-label="Manifesto language">
-        {languageOptions.map((option) => (
-          <button
-            type="button"
-            class:list={['lang-btn', { active: option.code === 'ko' }]}
-            data-lang-btn
-            data-lang={option.code}
-            role="tab"
-            aria-selected={option.code === 'ko' ? 'true' : 'false'}
-            aria-controls={`manifesto-${option.code}`}
-          >
-            {option.label}
-          </button>
-        ))}
+      <div class="page-copy" data-copy-locale="en">
+        <p class="eyebrow">PROJECT MANIFESTO</p>
+        <h1>Seoul Sillok Manifesto</h1>
+        <p class="page-summary">{MANIFESTO.en.summary}</p>
       </div>
     </header>
 
     {Object.entries(MANIFESTO).map(([code, content]) => (
       <article
         class="manifesto-card"
-        id={`manifesto-${code}`}
         lang={code}
-        data-manifesto-lang={code}
-        role="tabpanel"
-        hidden={code !== 'ko'}
+        data-copy-locale={code}
       >
         <div class="card-head">
           <p class="card-kicker">Seoul Sillok</p>
@@ -74,48 +48,6 @@ const languageOptions = [
   </section>
 </Layout>
 
-<script>
-  const root = document.querySelector('[data-manifesto-root]');
-
-  if (root instanceof HTMLElement) {
-    const buttons = Array.from(root.querySelectorAll('[data-lang-btn]'));
-    const copyBlocks = Array.from(root.querySelectorAll('[data-manifesto-copy]'));
-    const panels = Array.from(root.querySelectorAll('[data-manifesto-lang]'));
-
-    const resolveLanguage = (value) => (value === 'en' ? 'en' : 'ko');
-
-    const applyLanguage = (value, syncUrl = true) => {
-      const language = resolveLanguage(value);
-
-      buttons.forEach((button) => {
-        const isActive = button.dataset.lang === language;
-        button.classList.toggle('active', isActive);
-        button.setAttribute('aria-selected', String(isActive));
-      });
-
-      copyBlocks.forEach((block) => {
-        block.hidden = block.dataset.manifestoCopy !== language;
-      });
-
-      panels.forEach((panel) => {
-        panel.hidden = panel.dataset.manifestoLang !== language;
-      });
-
-      if (syncUrl) {
-        const basePath = `${window.location.pathname}${window.location.search}`;
-        history.replaceState(null, '', language === 'en' ? `${basePath}#en` : basePath);
-      }
-    };
-
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => applyLanguage(button.dataset.lang || 'ko'));
-    });
-
-    applyLanguage(resolveLanguage(window.location.hash.replace('#', '')), false);
-    window.addEventListener('hashchange', () => applyLanguage(window.location.hash.replace('#', ''), false));
-  }
-</script>
-
 <style>
   .manifesto-page {
     display: grid;
@@ -123,15 +55,7 @@ const languageOptions = [
   }
 
   .page-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .page-copy {
-    min-width: min(100%, 44rem);
+    display: block;
   }
 
   .eyebrow {
@@ -155,40 +79,6 @@ const languageOptions = [
     max-width: 46rem;
     color: #5b5144;
     line-height: 1.8;
-  }
-
-  .language-switch {
-    display: inline-flex;
-    gap: 0.35rem;
-    padding: 0.32rem;
-    border: 1px solid #ddd5c6;
-    border-radius: 999px;
-    background: rgba(255, 252, 246, 0.92);
-    box-shadow: 0 12px 24px rgba(41, 32, 18, 0.06);
-  }
-
-  .lang-btn {
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: #665d4f;
-    padding: 0.52rem 0.86rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-  }
-
-  .lang-btn:hover,
-  .lang-btn:focus-visible {
-    background: rgba(32, 29, 24, 0.08);
-    color: #1f1d19;
-    outline: none;
-  }
-
-  .lang-btn.active {
-    background: #1f1d19;
-    color: #fbf8f1;
   }
 
   .manifesto-card {
@@ -260,20 +150,6 @@ const languageOptions = [
   }
 
   @media (max-width: 760px) {
-    .page-header {
-      align-items: flex-start;
-    }
-
-    .language-switch {
-      width: 100%;
-      justify-content: flex-start;
-    }
-
-    .lang-btn {
-      flex: 1 1 auto;
-      text-align: center;
-    }
-
     .manifesto-card {
       border-radius: 22px;
       padding: 1rem;

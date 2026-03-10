@@ -35,34 +35,53 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
               <script async src="https://www.instagram.com/embed.js"></script>
             </div>
           ) : (
-            <p class="note">자동 연결된 퍼머링크가 아직 없어 프로필 링크로 연결됩니다.</p>
+            <p class="note" data-copy-locale="ko">자동 연결된 퍼머링크가 아직 없어 프로필 링크로 연결됩니다.</p>
+            <p class="note" data-copy-locale="en">No embeddable permalink is available yet, so this card links to the profile instead.</p>
           )}
 
           <pre>{instagramPost.caption}</pre>
-          <a href={instagramPost.url} target="_blank" rel="noreferrer">해당 포스트 보러 가기</a>
+          <a href={instagramPost.url} target="_blank" rel="noreferrer">
+            <span data-copy-locale="ko">해당 포스트 보러 가기</span>
+            <span data-copy-locale="en">View this post</span>
+          </a>
         </section>
       ) : (
         <section class="post-card" aria-label="인스타그램 포스트 없음">
           <header>
             <small>Instagram Post</small>
-            <h2>등록 대기 중</h2>
+            <h2 data-copy-locale="ko">등록 대기 중</h2>
+            <h2 data-copy-locale="en">Pending</h2>
           </header>
-          <p class="note">
+          <p class="note" data-copy-locale="ko">
             이 동네에 매핑된 Instagram 포스트를 아직 찾지 못했습니다.
             {record.nameKo} 키워드가 포함된 캡션 포스팅을 올리면 자동 연결됩니다.
           </p>
-          <a href={INSTAGRAM_PROFILE_URL} target="_blank" rel="noreferrer">@seoulsillok 프로필 열기</a>
+          <p class="note" data-copy-locale="en">
+            No Instagram post has been matched to this dong yet.
+            If you publish a caption containing the keyword {record.nameKo}, it will be linked automatically.
+          </p>
+          <a href={INSTAGRAM_PROFILE_URL} target="_blank" rel="noreferrer">
+            <span data-copy-locale="ko">@seoulsillok 프로필 열기</span>
+            <span data-copy-locale="en">Open @seoulsillok profile</span>
+          </a>
         </section>
       )}
 
       <section class="actions">
-        <a href={`/dong#district-${record.districtCode}`}>← {record.districtKo} 목록으로</a>
-        <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">서울실록 인스타그램</a>
+        <a href={`/dong#district-${record.districtCode}`}>
+          <span data-copy-locale="ko">← {record.districtKo} 목록으로</span>
+          <span data-copy-locale="en">← Back to {record.districtKo}</span>
+        </a>
+        <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">
+          <span data-copy-locale="ko">서울실록 인스타그램</span>
+          <span data-copy-locale="en">Seoul Sillok Instagram</span>
+        </a>
       </section>
 
       {district ? (
         <section class="related">
-          <h2>{record.districtKo}의 다른 동네</h2>
+          <h2 data-copy-locale="ko">{record.districtKo}의 다른 동네</h2>
+          <h2 data-copy-locale="en">Other neighborhoods in {record.districtKo}</h2>
           <ul>
             {district.dongs.map((dong, index) => (
               <li>
@@ -75,10 +94,15 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
     </article>
   ) : (
     <article class="detail">
-      <h1>존재하지 않는 동네 페이지입니다.</h1>
-      <p class="note">요청한 경로를 찾을 수 없습니다. 동네 목록으로 이동해 주세요.</p>
+      <h1 data-copy-locale="ko">존재하지 않는 동네 페이지입니다.</h1>
+      <h1 data-copy-locale="en">This neighborhood page does not exist.</h1>
+      <p class="note" data-copy-locale="ko">요청한 경로를 찾을 수 없습니다. 동네 목록으로 이동해 주세요.</p>
+      <p class="note" data-copy-locale="en">The requested path could not be found. Please go back to the neighborhood directory.</p>
       <section class="actions">
-        <a href="/dong">서울 동네 목록으로 이동</a>
+        <a href="/dong">
+          <span data-copy-locale="ko">서울 동네 목록으로 이동</span>
+          <span data-copy-locale="en">Go to the neighborhood directory</span>
+        </a>
       </section>
     </article>
   )}

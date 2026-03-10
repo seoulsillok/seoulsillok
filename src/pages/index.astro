@@ -9,36 +9,49 @@ const featured = ALL_DONGS.slice(0, 9);
 <Layout title="서울 실록" description="서울 전체 동네를 감각적으로 기록하는 아카이브">
   <section class="hero">
     <p class="eyebrow">SEOUL ARCHIVE</p>
-    <h1>서울의 동네를<br />미니멀하게 기록합니다</h1>
-    <p class="lead">
+    <h1 data-copy-locale="ko">서울의 동네를<br />미니멀하게 기록합니다</h1>
+    <h1 data-copy-locale="en">Archiving Seoul's neighborhoods<br />through a minimalist lens</h1>
+    <p class="lead" data-copy-locale="ko">
       Instagram 포스트를 기반으로 동네 페이지와 연결합니다.
       구를 선택하고, 연결된 동네 포스트를 바로 확인하세요.
     </p>
+    <p class="lead" data-copy-locale="en">
+      Connected to Instagram posts.
+      Select a district and jump directly to the linked neighborhood pages.
+    </p>
     <div class="hero-cta">
-      <a href="/dong" class="btn dark">지도에서 탐색하기</a>
+      <a href="/dong" class="btn dark">
+        <span data-copy-locale="ko">지도에서 탐색하기</span>
+        <span data-copy-locale="en">Explore the map</span>
+      </a>
       <a href={SOCIAL_LINKS.instagram} class="btn light" target="_blank" rel="noreferrer">@seoulsillok</a>
     </div>
   </section>
 
   <section class="map-block">
     <header>
-      <h2>서울 지도</h2>
-      <p>구를 선택하면 해당 구 섹션으로 이동합니다.</p>
+      <h2 data-copy-locale="ko">서울 지도</h2>
+      <h2 data-copy-locale="en">Seoul Map</h2>
+      <p data-copy-locale="ko">구를 선택하면 해당 구 섹션으로 이동합니다.</p>
+      <p data-copy-locale="en">Select a district to jump to its section.</p>
     </header>
     <SeoulArtMap districts={DISTRICTS} />
   </section>
 
   <section class="featured">
     <header>
-      <h2>빠른 이동</h2>
-      <p>{DISTRICTS.length}개 구 · {ALL_DONGS.length}개 동네</p>
+      <h2 data-copy-locale="ko">빠른 이동</h2>
+      <h2 data-copy-locale="en">Quick Access</h2>
+      <p data-copy-locale="ko">{DISTRICTS.length}개 구 · {ALL_DONGS.length}개 동네</p>
+      <p data-copy-locale="en">{DISTRICTS.length} districts · {ALL_DONGS.length} dongs</p>
     </header>
     <div class="cards">
       {featured.map((dong) => (
         <a class="card" href={`/dong/${dong.slug}`}>
           <small>{dong.districtKo}</small>
           <h3>{dong.nameKo}</h3>
-          <span>페이지 보기</span>
+          <span data-copy-locale="ko">페이지 보기</span>
+          <span data-copy-locale="en">View page</span>
         </a>
       ))}
     </div>
