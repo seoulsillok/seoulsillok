@@ -41,7 +41,12 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
               <div class="embed">
                 <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14"></blockquote>
               </div>
-              {instagramPost.caption ? <pre>{instagramPost.caption}</pre> : null}
+              {instagramPost.caption ? (
+                <section class="post-caption" aria-label="Instagram caption">
+                  <h3><span data-copy-locale="ko">인스타그램 글</span><span data-copy-locale="en">Instagram caption</span></h3>
+                  <p>{instagramPost.caption}</p>
+                </section>
+              ) : null}
               <a href={instagramPost.url} target="_blank" rel="noopener noreferrer">
                 <span data-copy-locale="ko">해당 포스트 보러 가기</span>
                 <span data-copy-locale="en">View this post</span>
@@ -175,8 +180,22 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
     background: #fff;
   }
 
-  pre {
+  .post-caption {
     margin: 0.85rem 0;
+    padding: 1rem;
+    border-radius: 9px;
+    background: #f7f3ec;
+  }
+
+  .post-caption h3 {
+    margin: 0 0 0.7rem;
+    color: #6b645a;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+  }
+
+  .post-caption p {
+    margin: 0;
     white-space: pre-wrap;
     font-family: 'Noto Sans KR', sans-serif;
     color: #2c281f;

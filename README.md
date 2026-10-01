@@ -24,6 +24,8 @@
 
 `npm run build`는 수동 링크를 항상 보존합니다. Instagram API with Instagram Login 접근 권한이 있다면 GitHub Actions secret에 `INSTAGRAM_ACCESS_TOKEN`을 설정하면 빌드할 때 캡션 첫 줄에서 동 이름을 찾아 포스트를 추가합니다. `INSTAGRAM_ACCESS_TOKEN` 환경 변수를 로컬에서 설정하고 `npm run import-instagram`을 실행하면 찾은 링크를 수동 JSON에 저장해 토큰 만료 뒤에도 유지할 수 있습니다. 같은 이름의 동이 여러 구에 있고 구를 구분할 수 없으면 자동 배정을 건너뜁니다. 토큰은 Git에 저장하지 마세요.
 
+수동으로 추가한 포스트의 글을 동네 페이지에 표시하려면 `python3 scripts/import-instagram-captions.py`를 실행하세요. 공개 Instagram 임베드에서 `@seoulsillok`의 글을 가져와 수동 JSON의 `caption` 필드에 저장합니다. 이미 작성한 `caption`은 덮어쓰지 않으며, Instagram에서 글을 가져올 수 없는 포스트는 비워 둡니다.
+
 토큰 발급 절차는 [Meta의 Instagram Login 시작 가이드](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/get-started)를 따릅니다. Instagram 계정이 Business 또는 Creator 계정이어야 합니다. Meta for Developers에서 Business 유형 앱을 만들고 Instagram API를 추가한 뒤, 앱 대시보드의 `Instagram → API setup with Instagram business login`에서 `@seoulsillok` 옆의 `Generate token`을 선택하세요. 대시보드에서 생성한 토큰은 60일간 유효합니다. 사용자 이름만으로는 포스트 API에 접근할 수 없습니다.
 
 ## 🚀 시작하기
