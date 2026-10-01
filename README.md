@@ -26,8 +26,6 @@
 
 수동으로 추가한 포스트의 글을 동네 페이지에 표시하려면 `python3 scripts/import-instagram-captions.py`를 실행하세요. 공개 Instagram 임베드에서 `@seoulsillok`의 글을 가져와 수동 JSON의 `caption` 필드에 저장합니다. 이미 작성한 `caption`은 덮어쓰지 않으며, Instagram에서 글을 가져올 수 없는 포스트는 비워 둡니다.
 
-Instagram 임베드는 영상 대신 Instagram으로 연결되는 미리보기를 보여 줍니다. 사이트의 `public/videos`에 MP4와 포스터 이미지를 보관하고 해당 수동 포스트에 `"video": { "src": "/videos/POST_ID.mp4", "poster": "/videos/POST_ID.jpg" }`를 추가하면, 동네 페이지에 Instagram 임베드를 유지하면서 `영상 재생` 버튼으로 사이트 안에서 영상을 볼 수 있습니다.
-
 토큰 발급 절차는 [Meta의 Instagram Login 시작 가이드](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/get-started)를 따릅니다. Instagram 계정이 Business 또는 Creator 계정이어야 합니다. Meta for Developers에서 Business 유형 앱을 만들고 Instagram API를 추가한 뒤, 앱 대시보드의 `Instagram → API setup with Instagram business login`에서 `@seoulsillok` 옆의 `Generate token`을 선택하세요. 대시보드에서 생성한 토큰은 60일간 유효합니다. 사용자 이름만으로는 포스트 API에 접근할 수 없습니다.
 
 ## 🚀 시작하기

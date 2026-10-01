@@ -2,7 +2,6 @@ export type InstagramPost = {
   title: string;
   url: string;
   caption: string;
-  video?: { src: string; poster?: string };
   timestamp?: string;
 };
 
@@ -90,88 +89,56 @@ export const INSTAGRAM_POSTS_BY_DONG: Record<string, InstagramPost[]> = {
     {
       "title": "혜화동",
       "url": "https://www.instagram.com/p/DQ9oPsalcnp/",
-      "caption": "혜화동 산책로\n\n1. 와룡공원길 (산책)\n2. 와룡공원 (산책)\n3. 성균관대학교 (산책)\n\n찬란한 축복의 낮과\n어둡고 성스러운 밤\n그리고 난 홀로 생각하죠\n이 얼마나 아름다운 세상인가요\n\nHyehwa-dong Walk Route\n\n1. Waryong Park Route (Walk)\n2. Waryong Park (Walk)\n3. Sungkyunkwan University (Walk)\n\nThe bright blessed day\nThe dark sacred night\nAnd I think to myself\nWhat a wonderful world\n\n#서울 #혜화동 #혜화동맛집 #혜화동맛집추천 #혜화동카페 #혜화동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hyehwa_dong",
-      "video": {
-        "src": "/videos/DQ9oPsalcnp.mp4",
-        "poster": "/videos/DQ9oPsalcnp.jpg"
-      }
+      "caption": "혜화동 산책로\n\n1. 와룡공원길 (산책)\n2. 와룡공원 (산책)\n3. 성균관대학교 (산책)\n\n찬란한 축복의 낮과\n어둡고 성스러운 밤\n그리고 난 홀로 생각하죠\n이 얼마나 아름다운 세상인가요\n\nHyehwa-dong Walk Route\n\n1. Waryong Park Route (Walk)\n2. Waryong Park (Walk)\n3. Sungkyunkwan University (Walk)\n\nThe bright blessed day\nThe dark sacred night\nAnd I think to myself\nWhat a wonderful world\n\n#서울 #혜화동 #혜화동맛집 #혜화동맛집추천 #혜화동카페 #혜화동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hyehwa_dong"
     }
   ],
   "guro:항동": [
     {
       "title": "항동",
       "url": "https://www.instagram.com/p/DRBZHxokrFn/",
-      "caption": "항동 산책로\n\n1. 제이라오 (저녁)\n2. 푸른수목원 & 항동철길 (산책)\n3. 9로평상 (카페)\n\n삶은 누구에게나 실험이고 중독의 연속이다.\n그 중독으로부터 조금 멀어지는 실험을 해보자.\n무언가를 깨트리는 것은 경계를 부풀리는 새로움을 전해줄 것이다.\n익숙함으로부터 멀리 벗어나는 건 쉽지 않겠지만, 인정하자\n살아가며 우리가 배운 건 영원한 것은 없다는 거, 아닌가?\n\nHang-dong Walk Route\n\n1. J.Rao (Dinner)\n2. Pureun Arboretum & Hang-dong Railroad (Walk)\n3. 9ro-Pyeong Sang (Cafe)\n\nLife is an experiment for everyone, and a continuous series of addictions.\nLet’s try an experiment to step back from those habits.\nBreaking the mold brings a freshness that pushes our boundaries.\nIt isn‘t easy to leave familiarity behind, but let’s face it—\nHaven‘t we learned by now that nothing is eternal?\n\n#서울 #항동 #항동맛집 #항동맛집추천 #항동카페 #항동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hang_dong",
-      "video": {
-        "src": "/videos/DRBZHxokrFn.mp4",
-        "poster": "/videos/DRBZHxokrFn.jpg"
-      }
+      "caption": "항동 산책로\n\n1. 제이라오 (저녁)\n2. 푸른수목원 & 항동철길 (산책)\n3. 9로평상 (카페)\n\n삶은 누구에게나 실험이고 중독의 연속이다.\n그 중독으로부터 조금 멀어지는 실험을 해보자.\n무언가를 깨트리는 것은 경계를 부풀리는 새로움을 전해줄 것이다.\n익숙함으로부터 멀리 벗어나는 건 쉽지 않겠지만, 인정하자\n살아가며 우리가 배운 건 영원한 것은 없다는 거, 아닌가?\n\nHang-dong Walk Route\n\n1. J.Rao (Dinner)\n2. Pureun Arboretum & Hang-dong Railroad (Walk)\n3. 9ro-Pyeong Sang (Cafe)\n\nLife is an experiment for everyone, and a continuous series of addictions.\nLet’s try an experiment to step back from those habits.\nBreaking the mold brings a freshness that pushes our boundaries.\nIt isn‘t easy to leave familiarity behind, but let’s face it—\nHaven‘t we learned by now that nothing is eternal?\n\n#서울 #항동 #항동맛집 #항동맛집추천 #항동카페 #항동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hang_dong"
     }
   ],
   "mapo:합정동": [
     {
       "title": "합정동",
       "url": "https://www.instagram.com/p/DRCkc2eEr7T/",
-      "caption": "합정동 산책로\n\n1. 저스티나 (저녁)\n2. 망원한강공원 (산책)\n3. 양화대교 (산책)\n\n어디든 데려가 줄래\n작은방을 나만의 해변으로 개조해\n웃음 지으며\n\nHapjeong-dong Walk Route\n\n1. Gjustina (Dinner)\n2. Mangwon Hangang Park (Walk)\n3. Yanghwa Bridge (Walk)\n\nWon‘t you take me anywhere?\nTurn this little room into my own private beach\nWith a smile\n\n#서울 #합정동 #합정동맛집 #합정동맛집추천 #합정동카페 #합정동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hapjeong_dong",
-      "video": {
-        "src": "/videos/DRCkc2eEr7T.mp4",
-        "poster": "/videos/DRCkc2eEr7T.jpg"
-      }
+      "caption": "합정동 산책로\n\n1. 저스티나 (저녁)\n2. 망원한강공원 (산책)\n3. 양화대교 (산책)\n\n어디든 데려가 줄래\n작은방을 나만의 해변으로 개조해\n웃음 지으며\n\nHapjeong-dong Walk Route\n\n1. Gjustina (Dinner)\n2. Mangwon Hangang Park (Walk)\n3. Yanghwa Bridge (Walk)\n\nWon‘t you take me anywhere?\nTurn this little room into my own private beach\nWith a smile\n\n#서울 #합정동 #합정동맛집 #합정동맛집추천 #합정동카페 #합정동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hapjeong_dong"
     }
   ],
   "yongsan:한남동": [
     {
       "title": "한남동 · 한강로동",
       "url": "https://www.instagram.com/p/DRHyPSSkjTI/",
-      "caption": "한남동, 한강로동 산책로\n\n1. 한남더힐 (산책)\n2. 브라이튼 한남 (산책)\n3. 한남 리첸시아 (산책)\n4. 아모레퍼시픽 사옥 (산책)\n5. 레미안 용산 더 센트럴 (산책)\n6. 용산 센트럴파크 (산책)\n\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n뭐든지 뭐든지 뭐든지 네가 좋은 대로 이 아파트를 클럽으로 바꿔 내 말은, 마시고, 춤추고, 피우고, 즐기고, 밤새 파티하자는 거야 건배 건배 girl, 어때 Oh oh oh 내가 널 원하는 것처럼 너도 날 원하지 않아, baby 지금 내가 널 필요로 하는 것처럼 너도 내가 필요하지 않아 잠은 내일 자고 오늘 밤은 미쳐보자 넌 그냥 날 만나러 오기만 하면 돼\n\nHannam-dong, Hangangno-dong Walk Route\n\n1. Hannam The Hill (Walk)\n2. Brighten Hannam (Walk)\n3. Hannam Richensia (Walk)\n4. Amorepacific HQ (Walk)\n5. Raemian Yongsan The Central (Walk)\n6. Yongsan Central Park (Walk)\n\nAPT APT APT APT APT APT Uh, uh huh uh huh\nAPT APT APT APT APT APT Uh, uh huh uh huh\nIt’s whatever it’s whatever it’s whatever you like\nTurn this apartment into a club I’m talking drink, dance, smoke, freak, party all night\nCheers, cheers, girl what’s up Oh oh oh\nDon’t you want me like I want you, baby\nDon’t you need me like I need you now\nSleep tomorrow but tonight go crazy\nAll you gotta do is just meet me at the\n\n#서울 #한남동 #한강로동 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hannam_dong #Hangangno_dong",
-      "video": {
-        "src": "/videos/DRHyPSSkjTI.mp4",
-        "poster": "/videos/DRHyPSSkjTI.jpg"
-      }
+      "caption": "한남동, 한강로동 산책로\n\n1. 한남더힐 (산책)\n2. 브라이튼 한남 (산책)\n3. 한남 리첸시아 (산책)\n4. 아모레퍼시픽 사옥 (산책)\n5. 레미안 용산 더 센트럴 (산책)\n6. 용산 센트럴파크 (산책)\n\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n뭐든지 뭐든지 뭐든지 네가 좋은 대로 이 아파트를 클럽으로 바꿔 내 말은, 마시고, 춤추고, 피우고, 즐기고, 밤새 파티하자는 거야 건배 건배 girl, 어때 Oh oh oh 내가 널 원하는 것처럼 너도 날 원하지 않아, baby 지금 내가 널 필요로 하는 것처럼 너도 내가 필요하지 않아 잠은 내일 자고 오늘 밤은 미쳐보자 넌 그냥 날 만나러 오기만 하면 돼\n\nHannam-dong, Hangangno-dong Walk Route\n\n1. Hannam The Hill (Walk)\n2. Brighten Hannam (Walk)\n3. Hannam Richensia (Walk)\n4. Amorepacific HQ (Walk)\n5. Raemian Yongsan The Central (Walk)\n6. Yongsan Central Park (Walk)\n\nAPT APT APT APT APT APT Uh, uh huh uh huh\nAPT APT APT APT APT APT Uh, uh huh uh huh\nIt’s whatever it’s whatever it’s whatever you like\nTurn this apartment into a club I’m talking drink, dance, smoke, freak, party all night\nCheers, cheers, girl what’s up Oh oh oh\nDon’t you want me like I want you, baby\nDon’t you need me like I need you now\nSleep tomorrow but tonight go crazy\nAll you gotta do is just meet me at the\n\n#서울 #한남동 #한강로동 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hannam_dong #Hangangno_dong"
     }
   ],
   "yongsan:한강로동": [
     {
       "title": "한남동 · 한강로동",
       "url": "https://www.instagram.com/p/DRHyPSSkjTI/",
-      "caption": "한남동, 한강로동 산책로\n\n1. 한남더힐 (산책)\n2. 브라이튼 한남 (산책)\n3. 한남 리첸시아 (산책)\n4. 아모레퍼시픽 사옥 (산책)\n5. 레미안 용산 더 센트럴 (산책)\n6. 용산 센트럴파크 (산책)\n\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n뭐든지 뭐든지 뭐든지 네가 좋은 대로 이 아파트를 클럽으로 바꿔 내 말은, 마시고, 춤추고, 피우고, 즐기고, 밤새 파티하자는 거야 건배 건배 girl, 어때 Oh oh oh 내가 널 원하는 것처럼 너도 날 원하지 않아, baby 지금 내가 널 필요로 하는 것처럼 너도 내가 필요하지 않아 잠은 내일 자고 오늘 밤은 미쳐보자 넌 그냥 날 만나러 오기만 하면 돼\n\nHannam-dong, Hangangno-dong Walk Route\n\n1. Hannam The Hill (Walk)\n2. Brighten Hannam (Walk)\n3. Hannam Richensia (Walk)\n4. Amorepacific HQ (Walk)\n5. Raemian Yongsan The Central (Walk)\n6. Yongsan Central Park (Walk)\n\nAPT APT APT APT APT APT Uh, uh huh uh huh\nAPT APT APT APT APT APT Uh, uh huh uh huh\nIt’s whatever it’s whatever it’s whatever you like\nTurn this apartment into a club I’m talking drink, dance, smoke, freak, party all night\nCheers, cheers, girl what’s up Oh oh oh\nDon’t you want me like I want you, baby\nDon’t you need me like I need you now\nSleep tomorrow but tonight go crazy\nAll you gotta do is just meet me at the\n\n#서울 #한남동 #한강로동 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hannam_dong #Hangangno_dong",
-      "video": {
-        "src": "/videos/DRHyPSSkjTI.mp4",
-        "poster": "/videos/DRHyPSSkjTI.jpg"
-      }
+      "caption": "한남동, 한강로동 산책로\n\n1. 한남더힐 (산책)\n2. 브라이튼 한남 (산책)\n3. 한남 리첸시아 (산책)\n4. 아모레퍼시픽 사옥 (산책)\n5. 레미안 용산 더 센트럴 (산책)\n6. 용산 센트럴파크 (산책)\n\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n아파트 아파트 아파트 아파트 아파트 아파트 Uh, uh huh uh huh\n뭐든지 뭐든지 뭐든지 네가 좋은 대로 이 아파트를 클럽으로 바꿔 내 말은, 마시고, 춤추고, 피우고, 즐기고, 밤새 파티하자는 거야 건배 건배 girl, 어때 Oh oh oh 내가 널 원하는 것처럼 너도 날 원하지 않아, baby 지금 내가 널 필요로 하는 것처럼 너도 내가 필요하지 않아 잠은 내일 자고 오늘 밤은 미쳐보자 넌 그냥 날 만나러 오기만 하면 돼\n\nHannam-dong, Hangangno-dong Walk Route\n\n1. Hannam The Hill (Walk)\n2. Brighten Hannam (Walk)\n3. Hannam Richensia (Walk)\n4. Amorepacific HQ (Walk)\n5. Raemian Yongsan The Central (Walk)\n6. Yongsan Central Park (Walk)\n\nAPT APT APT APT APT APT Uh, uh huh uh huh\nAPT APT APT APT APT APT Uh, uh huh uh huh\nIt’s whatever it’s whatever it’s whatever you like\nTurn this apartment into a club I’m talking drink, dance, smoke, freak, party all night\nCheers, cheers, girl what’s up Oh oh oh\nDon’t you want me like I want you, baby\nDon’t you need me like I need you now\nSleep tomorrow but tonight go crazy\nAll you gotta do is just meet me at the\n\n#서울 #한남동 #한강로동 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hannam_dong #Hangangno_dong"
     }
   ],
   "nowon:하계동": [
     {
       "title": "하계동",
       "url": "https://www.instagram.com/p/DRKhxheEi3k/",
-      "caption": "하계동 산책로\n\n1. 예노 (카페)\n2. 충숙근린공원 (산책)\n3. 경춘숲공원 (산책)\n\n아슬히 고개 내민 내게\n첫 봄인사를 건네줘요\n피울 수 있게 도와줘요\n\nHagye-dong Walk Route\n\n1. IIeno (Cafe)\n2. Chungsuk Park (Walk)\n3. Gyeongchun Line Forest Park (Walk)\n\nTo me, tentatively raising my head \nPlease say your first hello of spring\nHelp me so I can bloom\n\n#서울 #하계동 #하계동맛집 #하계동맛집추천 #하계동카페 #하계동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hagye_dong",
-      "video": {
-        "src": "/videos/DRKhxheEi3k.mp4",
-        "poster": "/videos/DRKhxheEi3k.jpg"
-      }
+      "caption": "하계동 산책로\n\n1. 예노 (카페)\n2. 충숙근린공원 (산책)\n3. 경춘숲공원 (산책)\n\n아슬히 고개 내민 내게\n첫 봄인사를 건네줘요\n피울 수 있게 도와줘요\n\nHagye-dong Walk Route\n\n1. IIeno (Cafe)\n2. Chungsuk Park (Walk)\n3. Gyeongchun Line Forest Park (Walk)\n\nTo me, tentatively raising my head \nPlease say your first hello of spring\nHelp me so I can bloom\n\n#서울 #하계동 #하계동맛집 #하계동맛집추천 #하계동카페 #하계동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Hagye_dong"
     }
   ],
   "jung:필동": [
     {
       "title": "필동",
       "url": "https://www.instagram.com/p/DUVqQZXlMzx/",
-      "caption": "필동 산책로\n\n1. 필동면옥 (점심)\n2. 카페허블 (카페)\n3. 몽트 (카페)\n4. 남산골한옥마을 (산책)\n5. 비움갤러리 (산책)\n6. 남산북측숲길 (산책)\n\n아슬히 고개 내민 그대\n얼마나 기다렸을까요\n꽃 필 수 있게 도울게요\n\nPil-dong Walk Route\n\n1. Pildong Myeonok (Lunch)\n2. Cafe Hubble (Cafe)\n3. Mont (Cafe)\n4. Namsangol Hanok Village (Walk)\n5. Beeum Gallery (Walk)\n6. Namsan Northern Forest Trail (Walk)\n\nYou, who timidly poked your head out,\nHow long must you have waited?\nI will help you bloom\n\n#서울 #필동 #필동맛집 #필동맛집추천 #필동카페 #필동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Pil_dong",
-      "video": {
-        "src": "/videos/DUVqQZXlMzx.mp4",
-        "poster": "/videos/DUVqQZXlMzx.jpg"
-      }
+      "caption": "필동 산책로\n\n1. 필동면옥 (점심)\n2. 카페허블 (카페)\n3. 몽트 (카페)\n4. 남산골한옥마을 (산책)\n5. 비움갤러리 (산책)\n6. 남산북측숲길 (산책)\n\n아슬히 고개 내민 그대\n얼마나 기다렸을까요\n꽃 필 수 있게 도울게요\n\nPil-dong Walk Route\n\n1. Pildong Myeonok (Lunch)\n2. Cafe Hubble (Cafe)\n3. Mont (Cafe)\n4. Namsangol Hanok Village (Walk)\n5. Beeum Gallery (Walk)\n6. Namsan Northern Forest Trail (Walk)\n\nYou, who timidly poked your head out,\nHow long must you have waited?\nI will help you bloom\n\n#서울 #필동 #필동맛집 #필동맛집추천 #필동카페 #필동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Pil_dong"
     }
   ],
   "songpa:풍납동": [
     {
       "title": "풍납동",
       "url": "https://www.instagram.com/p/DUayEMCDo7n/",
-      "caption": "풍납동 산책로\n\n1. 태백식당 (점심)\n2. 두부부 (베이커리)\n3. 인트로 베이커리 (베이커리)\n4. 풍납백제 문화공원 (산책)\n5. 광나루 한강공원 (산책)\n6. 유천냉면 (저녁)\n\n머물 곳 잃은 마음은\n정처 없이 계절을 헤매이고\n흩어지는 찰나의 순간들을\n두 눈 가득히 꾹꾹 눌러 담네\n\nPungnap-dong Walk Route\n\n1. TaeBaek Restaurant (Lunch)\n2. Dobubu (Bakery)\n3. Intro Bakery (Bakery)\n4. Pungnap Baekje Cultural Park (Walk)\n5. Gwangnaru Hangang Park (Walk)\n6. Yucheon Naengmyeon (Dinner)\n\nA heart with nowhere to rest\nWanders aimlessly through the seasons\nThose scattering, fleeting moments\nI fill my eyes, pressing them deep inside\n\n#서울 #풍납동 #풍납동맛집 #풍납동맛집추천 #풍납동카페 #풍납동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Pungnap_dong",
-      "video": {
-        "src": "/videos/DUayEMCDo7n.mp4",
-        "poster": "/videos/DUayEMCDo7n.jpg"
-      }
+      "caption": "풍납동 산책로\n\n1. 태백식당 (점심)\n2. 두부부 (베이커리)\n3. 인트로 베이커리 (베이커리)\n4. 풍납백제 문화공원 (산책)\n5. 광나루 한강공원 (산책)\n6. 유천냉면 (저녁)\n\n머물 곳 잃은 마음은\n정처 없이 계절을 헤매이고\n흩어지는 찰나의 순간들을\n두 눈 가득히 꾹꾹 눌러 담네\n\nPungnap-dong Walk Route\n\n1. TaeBaek Restaurant (Lunch)\n2. Dobubu (Bakery)\n3. Intro Bakery (Bakery)\n4. Pungnap Baekje Cultural Park (Walk)\n5. Gwangnaru Hangang Park (Walk)\n6. Yucheon Naengmyeon (Dinner)\n\nA heart with nowhere to rest\nWanders aimlessly through the seasons\nThose scattering, fleeting moments\nI fill my eyes, pressing them deep inside\n\n#서울 #풍납동 #풍납동맛집 #풍납동맛집추천 #풍납동카페 #풍납동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Pungnap_dong"
     }
   ]
 };

@@ -34,13 +34,8 @@ const aliases = Array.from(aliasTargets, ([place, targets]) => {
 }).filter(Boolean);
 
 function validPost(post) {
-  const validInstagramUrl = post && typeof post.url === 'string' &&
+  return post && typeof post.url === 'string' &&
     /^https:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+\/?/.test(post.url);
-  const validVideo = !post?.video || (
-    /^\/videos\/[A-Za-z0-9_-]+\.mp4$/.test(post.video.src || '') &&
-    (!post.video.poster || /^\/videos\/[A-Za-z0-9_-]+\.jpg$/.test(post.video.poster))
-  );
-  return validInstagramUrl && validVideo;
 }
 
 async function readManualPosts() {
@@ -55,7 +50,6 @@ async function readManualPosts() {
       title: post.title || key.split(':')[1],
       url: post.url,
       caption: post.caption || '',
-      ...(post.video ? { video: post.video } : {}),
       ...(post.timestamp ? { timestamp: post.timestamp } : {})
     }));
   }
@@ -124,7 +118,7 @@ function mergePosts(manual, apiPosts) {
 }
 
 async function writeOutput(map, source) {
-  const content = `export type InstagramPost = {\n  title: string;\n  url: string;\n  caption: string;\n  video?: { src: string; poster?: string };\n  timestamp?: string;\n};\n\nexport const INSTAGRAM_PROFILE_URL = ${JSON.stringify(PROFILE_URL)};\n\nexport const INSTAGRAM_POSTS_BY_DONG: Record<string, InstagramPost[]> = ${JSON.stringify(map, null, 2)};\n\nexport const INSTAGRAM_POST_SOURCE = ${JSON.stringify(source)};\n`;
+  const content = `export type InstagramPost = {\n  title: string;\n  url: string;\n  caption: string;\n  timestamp?: string;\n};\n\nexport const INSTAGRAM_PROFILE_URL = ${JSON.stringify(PROFILE_URL)};\n\nexport const INSTAGRAM_POSTS_BY_DONG: Record<string, InstagramPost[]> = ${JSON.stringify(map, null, 2)};\n\nexport const INSTAGRAM_POST_SOURCE = ${JSON.stringify(source)};\n`;
   await fs.writeFile(OUTPUT_PATH, content, 'utf8');
 }
 
