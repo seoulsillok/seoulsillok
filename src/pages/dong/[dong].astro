@@ -38,9 +38,18 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
                 <small>Instagram Post</small>
                 <h2>{instagramPost.title}</h2>
               </header>
-              <div class="embed">
-                <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14" style="width:100%;max-width:none;margin:0"></blockquote>
-              </div>
+              {instagramPost.video ? (
+                <div class="video-frame">
+                  <video controls playsinline preload="metadata" poster={instagramPost.video.poster} aria-label={`${instagramPost.title} 영상`}>
+                    <source src={instagramPost.video.src} type="video/mp4" />
+                    <a href={instagramPost.url} target="_blank" rel="noopener noreferrer">Instagram에서 영상 보기</a>
+                  </video>
+                </div>
+              ) : (
+                <div class="embed">
+                  <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14" style="width:100%;max-width:none;margin:0"></blockquote>
+                </div>
+              )}
               {instagramPost.caption ? (
                 <section class="post-caption" aria-label="Instagram caption">
                   <h3><span data-copy-locale="ko">인스타그램 글</span><span data-copy-locale="en">Instagram caption</span></h3>
@@ -53,7 +62,7 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
               </a>
             </section>
           ))}
-          <script async src="https://www.instagram.com/embed.js"></script>
+          {instagramPosts.some((post) => !post.video) ? <script async src="https://www.instagram.com/embed.js"></script> : null}
         </div>
       ) : (
         <section class="post-card" aria-label="인스타그램 포스트 없음">
@@ -178,6 +187,20 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
     border-radius: 10px;
     border: 1px solid #ebe4d8;
     background: #fff;
+  }
+
+  .video-frame {
+    margin-top: 0.8rem;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #111;
+  }
+
+  .video-frame video {
+    display: block;
+    width: 100%;
+    max-height: 75vh;
+    background: #111;
   }
 
   .embed :global(iframe.instagram-media) {
