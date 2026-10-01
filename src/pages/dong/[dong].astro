@@ -39,7 +39,7 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
                 <h2>{instagramPost.title}</h2>
               </header>
               <div class="embed">
-                <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14"></blockquote>
+                <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14" style="width:100%;max-width:none;margin:0"></blockquote>
               </div>
               {instagramPost.caption ? (
                 <section class="post-caption" aria-label="Instagram caption">
@@ -180,6 +180,15 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
     background: #fff;
   }
 
+  .embed :global(iframe.instagram-media) {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
   .post-caption {
     margin: 0.85rem 0;
     padding: 1rem;
@@ -272,5 +281,17 @@ const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:
     background: #1f1d19;
     border-color: #1f1d19;
     font-weight: 700;
+  }
+
+  @media (max-width: 600px) {
+    .detail {
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    .post-card {
+      padding: 0.5rem;
+    }
   }
 </style>
