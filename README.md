@@ -8,6 +8,8 @@
 
 `src/data/seoul-dong-crosswalk.csv`에서 각 법정동 코드가 어느 페이지에 속하는지 확인할 수 있습니다. 경계를 재생성하려면 Shapely 2를 설치한 뒤 저장소 루트에서 `python3 scripts/build-seoul-boundaries.py`를 실행하세요. 생성된 `seoul-dong-boundaries.geojson`이 실제 웹사이트에서 사용됩니다. 입력 경계 자료가 바뀌면 교차표와 지도도 다시 생성해야 합니다.
 
+홈페이지의 방문 기록은 `src/data/visit-progress.json`에서 관리합니다. `visited` 배열에는 `구 코드:동 이름`을 추가하면 방문 완료 목록과 전체 진행 수가 갱신되고, 아직 방문하지 않은 동네는 한국어 역순으로 다음 방문 목록에 표시됩니다.
+
 ## 📷 Instagram 포스트 연결
 
 포스트 URL을 알고 있다면 `src/data/instagram-posts.manual.json`에 다음 형식으로 추가하세요. 키는 `구 코드:동 이름`이라 같은 이름의 동도 구별됩니다. 포스트와 릴 URL을 지원하며 한 동에 여러 개를 넣을 수 있습니다.

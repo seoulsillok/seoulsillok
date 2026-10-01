@@ -1,7 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import NeighborhoodDirectory from '../components/NeighborhoodDirectory.astro';
-import { SOCIAL_LINKS } from '../data/seoul';
+import { ALL_DONGS, getLocalizedDistrictName, getLocalizedDongName, SOCIAL_LINKS } from '../data/seoul';
+import visitProgress from '../data/visit-progress.json';
+
+const visitedKeys = new Set(visitProgress.visited);
+const koreanReverseOrder = (a: (typeof ALL_DONGS)[number], b: (typeof ALL_DONGS)[number]) =>
+  b.nameKo.localeCompare(a.nameKo, 'ko-KR') || b.districtKo.localeCompare(a.districtKo, 'ko-KR');
+const visitedDongs = ALL_DONGS.filter((dong) => visitedKeys.has(`${dong.districtCode}:${dong.nameKo}`)).sort(koreanReverseOrder);
+const nextDongs = ALL_DONGS.filter((dong) => !visitedKeys.has(`${dong.districtCode}:${dong.nameKo}`)).sort(koreanReverseOrder);
 ---
 
 <Layout title="서울 실록" description="서울 전체 동네를 감각적으로 기록하는 아카이브">
@@ -34,6 +41,42 @@ import { SOCIAL_LINKS } from '../data/seoul';
       <p data-copy-locale="en">Select a district on the map to zoom in and filter the directory below without leaving the homepage.</p>
     </header>
     <NeighborhoodDirectory />
+  </section>
+
+  <section class="visit-progress" id="visit-progress">
+    <header class="progress-heading">
+      <div>
+        <p class="eyebrow" data-copy-locale="ko">서울 동네 기록</p>
+        <p class="eyebrow" data-copy-locale="en">NEIGHBORHOOD JOURNAL</p>
+        <h2 data-copy-locale="ko">방문한 동네와 다음 여정</h2>
+        <h2 data-copy-locale="en">Visited and up next</h2>
+      </div>
+      <p class="progress-count">
+        <strong>{visitedDongs.length}</strong><span data-copy-locale="ko"> / {ALL_DONGS.length}개 방문</span>
+        <span data-copy-locale="en"> / {ALL_DONGS.length} visited</span>
+      </p>
+    </header>
+    <div class="progress-track" role="progressbar" aria-label="Dong visits" aria-valuemin="0" aria-valuemax={ALL_DONGS.length} aria-valuenow={visitedDongs.length}>
+      <span style={`width: ${(visitedDongs.length / ALL_DONGS.length) * 100}%`}></span>
+    </div>
+    <div class="progress-columns">
+      <section class="progress-list visited-list">
+        <h3><span data-copy-locale="ko">방문 완료</span><span data-copy-locale="en">Visited</span><span class="list-count">{visitedDongs.length}</span></h3>
+        {visitedDongs.length ? <ol>
+          {visitedDongs.map((dong) => (
+            <li><a href={`/dong/${dong.slug}`}><span><strong><span data-copy-locale="ko">{dong.nameKo}</span><span data-copy-locale="en">{getLocalizedDongName(dong.nameKo, 'en')}</span></strong><small><span data-copy-locale="ko">{dong.districtKo}</span><span data-copy-locale="en">{getLocalizedDistrictName({ code: dong.districtCode, nameKo: dong.districtKo }, 'en')}</span></small></span><span aria-hidden="true">↗</span></a></li>
+          ))}
+        </ol> : <p class="empty-list"><span data-copy-locale="ko">아직 기록된 방문이 없습니다.</span><span data-copy-locale="en">No visits recorded yet.</span></p>}
+      </section>
+      <section class="progress-list next-list">
+        <h3><span data-copy-locale="ko">다음 방문</span><span data-copy-locale="en">Up next</span><span class="list-count">{nextDongs.length}</span></h3>
+        <ol>
+          {nextDongs.map((dong, index) => (
+            <li class:list-next={index === 0}><a href={`/dong/${dong.slug}`}><span><strong><span data-copy-locale="ko">{dong.nameKo}</span><span data-copy-locale="en">{getLocalizedDongName(dong.nameKo, 'en')}</span></strong><small><span data-copy-locale="ko">{dong.districtKo}</span><span data-copy-locale="en">{getLocalizedDistrictName({ code: dong.districtCode, nameKo: dong.districtKo }, 'en')}</span></small></span>{index === 0 ? <span class="next-badge"><span data-copy-locale="ko">다음</span><span data-copy-locale="en">NEXT</span></span> : <span aria-hidden="true">↗</span>}</a></li>
+          ))}
+        </ol>
+      </section>
+    </div>
   </section>
 </Layout>
 
@@ -106,4 +149,27 @@ import { SOCIAL_LINKS } from '../data/seoul';
     margin: 0.45rem 0 0.8rem;
     color: #60584d;
   }
+
+  .visit-progress { margin: 3.5rem 0 2rem; }
+  .progress-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+  .progress-heading h2 { margin: 0.45rem 0 0; color: #201d18; font: 600 clamp(1.4rem, 3vw, 2rem) 'Fraunces', serif; }
+  .progress-count { margin: 0; color: #60584d; white-space: nowrap; }
+  .progress-count strong { color: #201d18; font-size: 1.45rem; }
+  .progress-track { height: 5px; margin: 1rem 0 1.4rem; overflow: hidden; border-radius: 99px; background: #e9e4dc; }
+  .progress-track span { display: block; height: 100%; min-width: 4px; border-radius: inherit; background: #7a392a; }
+  .progress-columns { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 1rem; }
+  .progress-list { min-width: 0; padding: 1rem; border: 1px solid #e7e1d8; border-radius: 12px; background: #fcfbf8; }
+  .progress-list h3 { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.65rem; color: #302a23; font-size: 1rem; }
+  .list-count { color: #82796d; font-size: 0.78rem; font-weight: 500; }
+  .progress-list ol { max-height: 25rem; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+  .progress-list li { border-top: 1px solid #eee9e1; }
+  .progress-list li a { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.55rem 0.2rem; color: #302a23; text-decoration: none; }
+  .progress-list li a:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+  .progress-list li strong, .progress-list li small { display: block; }
+  .progress-list li small { margin-top: 0.1rem; color: #82796d; font-size: 0.75rem; }
+  .progress-list li:not(.list-next) > a > span:last-child { color: #988f83; }
+  .progress-list li.list-next { margin: 0.1rem -0.35rem; padding: 0 0.35rem; border-radius: 7px; background: #f2ede4; }
+  .next-badge { padding: 0.2rem 0.45rem; border-radius: 99px; color: #fff; background: #7a392a; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; }
+  .empty-list { margin: 0; color: #82796d; }
+  @media (max-width: 680px) { .progress-columns { grid-template-columns: 1fr; } .progress-heading { align-items: start; flex-direction: column; } }
 </style>
