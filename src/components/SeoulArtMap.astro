@@ -1,6 +1,6 @@
 ---
 import type { SeoulDistrict } from '../data/seoul';
-import { getDistrictEnglishNameByCode, getLocalizedDongName } from '../data/seoul';
+import { getDistrictEnglishNameByCode, getDongSlug, getLocalizedDongName } from '../data/seoul';
 import { SEOUL_MAP } from '../data/seoul-map.js';
 
 interface Props {
@@ -30,7 +30,7 @@ const districtPayload = districts.map((district) => {
     minY: mapDistrict?.minY ?? Math.max(0, district.map.y - 8),
     maxY: mapDistrict?.maxY ?? Math.min(100, district.map.y + 8),
     dongs: district.dongs.map((dong, index) => {
-      const slug = `${district.code}-${index + 1}`;
+      const slug = getDongSlug(district.code, dong, index);
       const mapFeature = mapFeatureBySlug.get(slug);
 
       return {
@@ -144,8 +144,8 @@ const districtPayload = districts.map((district) => {
 
   {isInteractive ? (
     <p class="map-note">
-      <span data-copy-locale="ko">동 이름은 실제 경계 중심점을 기준으로 표시됩니다. 현재 지도는 법정동과 행정동 경계를 함께 사용해 앱의 동 목록과 맞췄습니다.</span>
-      <span data-copy-locale="en">Dong names are placed from the centroids of their mapped regions. This map combines legal and administrative dong boundaries so it matches the dong list used in the app.</span>
+      <span data-copy-locale="ko">실제 법정동 경계를 바탕으로 215개 동네를 표시합니다. 일부 행정동 이름은 여러 법정동을 하나로 묶습니다.</span>
+      <span data-copy-locale="en">This map shows 215 neighborhoods from legal dong boundaries. Some administrative dong names group several legal dongs.</span>
     </p>
   ) : null}
 

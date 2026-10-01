@@ -121,7 +121,7 @@ export const DISTRICTS: SeoulDistrict[] = [
     code: 'gangseo',
     nameKo: '강서구',
     map: { x: 15.2, y: 52.7 },
-    dongs: ['염창동', '등촌동', '화곡동', '가양동', '공항동', '방화동', '발산동', '마곡동']
+    dongs: ['염창동', '등촌동', '화곡동', '가양동', '공항동', '방화동', '발산동', '마곡동', '개화동']
   },
   {
     code: 'gwanak',
@@ -139,7 +139,7 @@ export const DISTRICTS: SeoulDistrict[] = [
     code: 'guro',
     nameKo: '구로구',
     map: { x: 16.8, y: 72.4 },
-    dongs: ['신도림동', '구로동', '가리봉동', '고척동', '개봉동', '오류동', '궁동']
+    dongs: ['신도림동', '구로동', '가리봉동', '고척동', '개봉동', '오류동', '궁동', '항동', '온수동', '천왕동']
   },
   {
     code: 'geumcheon',
@@ -169,13 +169,13 @@ export const DISTRICTS: SeoulDistrict[] = [
     code: 'dongjak',
     nameKo: '동작구',
     map: { x: 41.0, y: 71.4 },
-    dongs: ['노량진동', '상도동', '흑석동', '사당동', '대방동', '신대방동']
+    dongs: ['노량진동', '상도동', '흑석동', '사당동', '대방동', '신대방동', '동작동']
   },
   {
     code: 'mapo',
     nameKo: '마포구',
     map: { x: 30.7, y: 53.6 },
-    dongs: ['공덕동', '아현동', '도화동', '용강동', '대흥동', '염리동', '신수동', '서강동', '서교동', '합정동', '망원동', '연남동', '상암동', '성산동']
+    dongs: ['공덕동', '아현동', '도화동', '용강동', '대흥동', '염리동', '신수동', '서강동', '서교동', '합정동', '망원동', '연남동', '상암동', '성산동', '중동']
   },
   {
     code: 'seodaemun',
@@ -187,19 +187,19 @@ export const DISTRICTS: SeoulDistrict[] = [
     code: 'seocho',
     nameKo: '서초구',
     map: { x: 54.1, y: 76.6 },
-    dongs: ['서초동', '잠원동', '반포동', '방배동', '양재동', '내곡동']
+    dongs: ['서초동', '잠원동', '반포동', '방배동', '양재동', '내곡동', '우면동', '원지동']
   },
   {
     code: 'seongdong',
     nameKo: '성동구',
     map: { x: 58.4, y: 56.0 },
-    dongs: ['왕십리동', '행당동', '응봉동', '금호동', '옥수동', '성수동', '송정동', '용답동']
+    dongs: ['왕십리동', '행당동', '응봉동', '금호동', '옥수동', '성수동', '송정동', '용답동', '사근동', '마장동']
   },
   {
     code: 'seongbuk',
     nameKo: '성북구',
     map: { x: 53.4, y: 39.7 },
-    dongs: ['성북동', '삼선동', '동선동', '돈암동', '안암동', '보문동', '정릉동', '길음동', '종암동', '장위동', '석관동']
+    dongs: ['성북동', '삼선동', '동선동', '돈암동', '안암동', '보문동', '정릉동', '길음동', '종암동', '장위동', '석관동', '월곡동']
   },
   {
     code: 'songpa',
@@ -217,7 +217,7 @@ export const DISTRICTS: SeoulDistrict[] = [
     code: 'yeongdeungpo',
     nameKo: '영등포구',
     map: { x: 31.5, y: 64.1 },
-    dongs: ['영등포동', '여의도동', '당산동', '문래동', '양평동', '신길동', '대림동', '도림동']
+    dongs: ['영등포동', '여의도동', '당산동', '문래동', '양평동', '신길동', '대림동', '도림동', '양화동']
   },
   {
     code: 'yongsan',
@@ -235,13 +235,13 @@ export const DISTRICTS: SeoulDistrict[] = [
     code: 'jongno',
     nameKo: '종로구',
     map: { x: 47.5, y: 46.2 },
-    dongs: ['청운효자동', '사직동', '삼청동', '부암동', '평창동', '무악동', '교남동', '가회동', '종로1가', '종로2가', '종로3가', '종로4가', '이화동', '혜화동', '창신동', '숭인동']
+    dongs: ['청운효자동', '사직동', '삼청동', '부암동', '평창동', '무악동', '교남동', '가회동', '종로동', '이화동', '혜화동', '창신동', '숭인동']
   },
   {
     code: 'jung',
     nameKo: '중구',
     map: { x: 50.6, y: 52.3 },
-    dongs: ['소공동', '회현동', '명동', '필동', '장충동', '광희동', '을지로동', '신당동', '다산동', '약수동', '청구동', '동화동', '황학동', '중림동']
+    dongs: ['소공동', '회현동', '명동', '필동', '장충동', '광희동', '을지로동', '신당동', '황학동', '중림동']
   },
   {
     code: 'jungnang',
@@ -258,9 +258,24 @@ export type DongRecord = {
   nameKo: string;
 };
 
+// Keep published URLs stable when an editorial dong is merged or removed.
+const LEGACY_DONG_ORDER: Record<string, string[]> = {
+  jongno: ['청운효자동', '사직동', '삼청동', '부암동', '평창동', '무악동', '교남동', '가회동', '종로1가', '종로2가', '종로3가', '종로4가', '이화동', '혜화동', '창신동', '숭인동'],
+  jung: ['소공동', '회현동', '명동', '필동', '장충동', '광희동', '을지로동', '신당동', '다산동', '약수동', '청구동', '동화동', '황학동', '중림동']
+};
+
+export function getDongSlug(districtCode: string, nameKo: string, index: number) {
+  const oldNames = LEGACY_DONG_ORDER[districtCode];
+  if (oldNames) {
+    const oldIndex = oldNames.indexOf(nameKo);
+    return `${districtCode}-${oldIndex >= 0 ? oldIndex + 1 : oldNames.length + 1}`;
+  }
+  return `${districtCode}-${index + 1}`;
+}
+
 export const ALL_DONGS: DongRecord[] = DISTRICTS.flatMap((district) =>
   district.dongs.map((dong, index) => ({
-    slug: `${district.code}-${index + 1}`,
+    slug: getDongSlug(district.code, dong, index),
     districtKo: district.nameKo,
     districtCode: district.code,
     nameKo: dong
@@ -268,7 +283,11 @@ export const ALL_DONGS: DongRecord[] = DISTRICTS.flatMap((district) =>
 );
 
 export function findDongBySlug(slug: string): DongRecord | undefined {
-  return ALL_DONGS.find((entry) => entry.slug === slug);
+  const aliases: Record<string, string> = {
+    'jongno-9': 'jongno-17', 'jongno-10': 'jongno-17', 'jongno-11': 'jongno-17', 'jongno-12': 'jongno-17',
+    'jung-9': 'jung-8', 'jung-10': 'jung-8', 'jung-11': 'jung-8', 'jung-12': 'jung-8'
+  };
+  return ALL_DONGS.find((entry) => entry.slug === (aliases[slug] || slug));
 }
 
 export function getDistrictByCode(code: string): SeoulDistrict | undefined {

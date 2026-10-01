@@ -1,93 +1,22 @@
 import { ALL_DONGS, DISTRICTS } from './seoul.ts';
-import legalGeoJsonRaw from './seoul-legal-dongs.geojson?raw';
-import adminGeoJsonRaw from './seoul-dongs-2017.geojson?raw';
+import groupedGeoJsonRaw from './seoul-dong-boundaries.geojson?raw';
 
 const TARGET_WIDTH = 1000;
 const MAP_PADDING = 28;
 const SIMPLIFY_TOLERANCE = 0.85;
 
-const LEGAL_DISTRICT_PREFIX_BY_CODE = {
-  jongno: '11110',
-  jung: '11140',
-  yongsan: '11170',
-  seongdong: '11200',
-  gwangjin: '11215',
-  dongdaemun: '11230',
-  jungnang: '11260',
-  seongbuk: '11290',
-  gangbuk: '11305',
-  dobong: '11320',
-  nowon: '11350',
-  eunpyeong: '11380',
-  seodaemun: '11410',
-  mapo: '11440',
-  yangcheon: '11470',
-  gangseo: '11500',
-  guro: '11530',
-  geumcheon: '11545',
-  yeongdeungpo: '11560',
-  dongjak: '11590',
-  gwanak: '11620',
-  seocho: '11650',
-  gangnam: '11680',
-  songpa: '11710',
-  gangdong: '11740'
-};
-
-const MANUAL_GEOMETRY_REFS = {
-  gangseo: {
-    발산동: [
-      { source: 'legal', name: '내발산동' },
-      { source: 'legal', name: '외발산동' }
-    ]
-  },
-  seongdong: {
-    왕십리동: [
-      { source: 'legal', name: '상왕십리동' },
-      { source: 'legal', name: '하왕십리동' }
-    ],
-    금호동: [
-      { source: 'legal', name: '금호동1가' },
-      { source: 'legal', name: '금호동2가' },
-      { source: 'legal', name: '금호동3가' },
-      { source: 'legal', name: '금호동4가' }
-    ],
-    성수동: [
-      { source: 'legal', name: '성수동1가' },
-      { source: 'legal', name: '성수동2가' }
-    ]
-  },
-  yongsan: {
-    용산동: [
-      { source: 'legal', name: '용산동1가' },
-      { source: 'legal', name: '용산동2가' },
-      { source: 'legal', name: '용산동3가' },
-      { source: 'legal', name: '용산동4가' },
-      { source: 'legal', name: '용산동5가' },
-      { source: 'legal', name: '용산동6가' }
-    ],
-    원효로동: [
-      { source: 'legal', name: '원효로1가' },
-      { source: 'legal', name: '원효로2가' },
-      { source: 'legal', name: '원효로3가' },
-      { source: 'legal', name: '원효로4가' }
-    ]
-  }
-};
-
-const districtNameByCode = new Map(DISTRICTS.map((district) => [district.code, district.nameKo]));
-const districtCodeByName = new Map(DISTRICTS.map((district) => [district.nameKo, district.code]));
-const districtCodeByLegalPrefix = new Map(
-  Object.entries(LEGAL_DISTRICT_PREFIX_BY_CODE).map(([districtCode, prefix]) => [prefix, districtCode])
+const groupedGeoJson = JSON.parse(groupedGeoJsonRaw);
+const geometryByDong = new Map(
+  groupedGeoJson.features.map((feature) => [
+    `${feature.properties.districtCode}:${feature.properties.dongName}`,
+    feature.geometry
+  ])
 );
-
-const legalGeoJson = JSON.parse(legalGeoJsonRaw);
-const adminGeoJson = JSON.parse(adminGeoJsonRaw);
-
-const legalIndex = buildLegalIndex();
-const adminIndex = buildAdminIndex();
-
-const resolvedFeatures = ALL_DONGS.map((dong) => buildFeatureEntry(dong));
+const resolvedFeatures = ALL_DONGS.map((dong) => {
+  const geometry = geometryByDong.get(`${dong.districtCode}:${dong.nameKo}`);
+  if (!geometry) throw new Error(`No geometry found for ${dong.districtKo} ${dong.nameKo}`);
+  return { ...dong, multiPolygons: [toMultiPolygon(geometry)] };
+});
 const projectedFeatures = projectFeatures(resolvedFeatures);
 const districtMapEntries = buildDistrictEntries(projectedFeatures);
 
@@ -97,93 +26,6 @@ export const SEOUL_MAP = {
   features: projectedFeatures.features,
   districts: districtMapEntries
 };
-
-function buildLegalIndex() {
-  const index = new Map();
-
-  for (const feature of legalGeoJson.features) {
-    const code = String(feature?.properties?.EMD_CD || '');
-    const districtCode = districtCodeByLegalPrefix.get(code.slice(0, 5));
-    const districtName = districtNameByCode.get(districtCode || '');
-    const dongName = feature?.properties?.EMD_KOR_NM;
-
-    if (!districtCode || !districtName || !dongName) continue;
-
-    const key = createFeatureKey(districtCode, dongName);
-    addIndexedGeometry(index, key, toMultiPolygon(feature.geometry));
-  }
-
-  return index;
-}
-
-function buildAdminIndex() {
-  const index = new Map();
-
-  for (const feature of adminGeoJson.features) {
-    const admName = String(feature?.properties?.adm_nm || '');
-    const [, districtName, dongName] = admName.split(' ');
-    const districtCode = districtCodeByName.get(districtName);
-
-    if (!districtCode || !dongName) continue;
-
-    const key = createFeatureKey(districtCode, dongName);
-    addIndexedGeometry(index, key, toMultiPolygon(feature.geometry));
-  }
-
-  return index;
-}
-
-function createFeatureKey(districtCode, dongName) {
-  return `${districtCode}:${dongName}`;
-}
-
-function addIndexedGeometry(index, key, geometry) {
-  const existing = index.get(key);
-
-  if (existing) {
-    existing.push(geometry);
-    return;
-  }
-
-  index.set(key, [geometry]);
-}
-
-function buildFeatureEntry(dong) {
-  const refs = resolveGeometryRefs(dong);
-  const multiPolygons = refs.flatMap((ref) => {
-    const index = ref.source === 'legal' ? legalIndex : adminIndex;
-    return index.get(createFeatureKey(dong.districtCode, ref.name)) || [];
-  });
-
-  if (!multiPolygons.length) {
-    throw new Error(`No geometry found for ${dong.districtKo} ${dong.nameKo}`);
-  }
-
-  return {
-    ...dong,
-    multiPolygons
-  };
-}
-
-function resolveGeometryRefs(dong) {
-  const exactLegalKey = createFeatureKey(dong.districtCode, dong.nameKo);
-
-  if (legalIndex.has(exactLegalKey)) {
-    return [{ source: 'legal', name: dong.nameKo }];
-  }
-
-  if (adminIndex.has(exactLegalKey)) {
-    return [{ source: 'admin', name: dong.nameKo }];
-  }
-
-  const manualRefs = MANUAL_GEOMETRY_REFS[dong.districtCode]?.[dong.nameKo];
-
-  if (manualRefs) {
-    return manualRefs;
-  }
-
-  throw new Error(`Unmapped dong geometry: ${dong.districtKo} ${dong.nameKo}`);
-}
 
 function toMultiPolygon(geometry) {
   if (!geometry || !Array.isArray(geometry.coordinates)) {
