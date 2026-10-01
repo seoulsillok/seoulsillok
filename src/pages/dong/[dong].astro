@@ -1,10 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { ALL_DONGS, SOCIAL_LINKS, findDongBySlug, getDistrictByCode, getLocalizedDistrictName, getLocalizedDongName } from '../../data/seoul';
+import { ALL_DONGS, SOCIAL_LINKS, findDongBySlug, getDistrictByCode, getDongSlug, getLocalizedDistrictName, getLocalizedDongName } from '../../data/seoul';
 import { INSTAGRAM_POSTS_BY_DONG, INSTAGRAM_PROFILE_URL } from '../../data/instagram-posts.generated';
 
 export async function getStaticPaths() {
-  return ALL_DONGS.map((entry) => ({ params: { dong: entry.slug } }));
+  const aliases = ['jongno-9', 'jongno-10', 'jongno-11', 'jongno-12', 'jung-9', 'jung-10', 'jung-11', 'jung-12'];
+  return [...ALL_DONGS.map((entry) => ({ params: { dong: entry.slug } })), ...aliases.map((dong) => ({ params: { dong } }))];
 }
 
 const slug = String(Astro.params.dong || '');
@@ -13,8 +14,7 @@ const district = record ? getDistrictByCode(record.districtCode) : undefined;
 const districtNameEn = record ? getLocalizedDistrictName({ code: record.districtCode, nameKo: record.districtKo }, 'en') : '';
 const dongNameEn = record ? getLocalizedDongName(record.nameKo, 'en') : '';
 
-const instagramPost = record ? INSTAGRAM_POSTS_BY_DONG[record.nameKo] : undefined;
-const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPost.url) : false;
+const instagramPosts = record ? INSTAGRAM_POSTS_BY_DONG[`${record.districtCode}:${record.nameKo}`] || [] : [];
 ---
 
 <Layout title={record ? `${record.nameKo} 기록` : '동네 기록'} description="서울 동네 기록 상세 페이지">
@@ -30,29 +30,26 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
         <span data-copy-locale="en">{districtNameEn}</span>
       </p>
 
-      {instagramPost ? (
-        <section class="post-card" aria-label="인스타그램 포스트">
-          <header>
-            <small>Instagram Post</small>
-            <h2>{instagramPost.title}</h2>
-          </header>
-
-          {hasEmbeddablePost ? (
-            <div class="embed">
-              <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14"></blockquote>
-              <script async src="https://www.instagram.com/embed.js"></script>
-            </div>
-          ) : (
-            <p class="note" data-copy-locale="ko">자동 연결된 퍼머링크가 아직 없어 프로필 링크로 연결됩니다.</p>
-            <p class="note" data-copy-locale="en">No embeddable permalink is available yet, so this card links to the profile instead.</p>
-          )}
-
-          <pre>{instagramPost.caption}</pre>
-          <a href={instagramPost.url} target="_blank" rel="noreferrer">
-            <span data-copy-locale="ko">해당 포스트 보러 가기</span>
-            <span data-copy-locale="en">View this post</span>
-          </a>
-        </section>
+      {instagramPosts.length ? (
+        <div class="post-list">
+          {instagramPosts.map((instagramPost) => (
+            <section class="post-card" aria-label="인스타그램 포스트">
+              <header>
+                <small>Instagram Post</small>
+                <h2>{instagramPost.title}</h2>
+              </header>
+              <div class="embed">
+                <blockquote class="instagram-media" data-instgrm-permalink={instagramPost.url} data-instgrm-version="14"></blockquote>
+              </div>
+              {instagramPost.caption ? <pre>{instagramPost.caption}</pre> : null}
+              <a href={instagramPost.url} target="_blank" rel="noopener noreferrer">
+                <span data-copy-locale="ko">해당 포스트 보러 가기</span>
+                <span data-copy-locale="en">View this post</span>
+              </a>
+            </section>
+          ))}
+          <script async src="https://www.instagram.com/embed.js"></script>
+        </div>
       ) : (
         <section class="post-card" aria-label="인스타그램 포스트 없음">
           <header>
@@ -61,12 +58,10 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
             <h2 data-copy-locale="en">Pending</h2>
           </header>
           <p class="note" data-copy-locale="ko">
-            이 동네에 매핑된 Instagram 포스트를 아직 찾지 못했습니다.
-            {record.nameKo} 키워드가 포함된 캡션 포스팅을 올리면 자동 연결됩니다.
+            이 동네에 연결된 Instagram 포스트가 아직 없습니다.
           </p>
           <p class="note" data-copy-locale="en">
-            No Instagram post has been matched to this dong yet.
-            If you publish a caption containing the keyword "{record.nameKo}" ({dongNameEn}), it will be linked automatically.
+            No Instagram post is linked to this dong yet.
           </p>
           <a href={INSTAGRAM_PROFILE_URL} target="_blank" rel="noreferrer">
             <span data-copy-locale="ko">@seoulsillok 프로필 열기</span>
@@ -93,7 +88,7 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
           <ul>
             {district.dongs.map((dong, index) => (
               <li>
-                <a href={`/dong/${district.code}-${index + 1}`} class:list={[{ active: dong === record.nameKo }]}>
+                <a href={`/dong/${getDongSlug(district.code, dong, index)}`} class:list={[{ active: dong === record.nameKo }]}>
                   <span data-copy-locale="ko">{dong}</span>
                   <span data-copy-locale="en">{getLocalizedDongName(dong, 'en')}</span>
                 </a>
@@ -155,6 +150,11 @@ const hasEmbeddablePost = instagramPost ? /instagram\.com\/p\//.test(instagramPo
     border-radius: 12px;
     padding: 0.9rem;
     background: #fff;
+  }
+
+  .post-list {
+    display: grid;
+    gap: 0.8rem;
   }
 
   .post-card header small {

@@ -1,6 +1,6 @@
 ---
 import SeoulArtMap from './SeoulArtMap.astro';
-import { ALL_DONGS, DISTRICTS, getLocalizedDistrictName, getLocalizedDongName } from '../data/seoul';
+import { ALL_DONGS, DISTRICTS, getDongSlug, getLocalizedDistrictName, getLocalizedDongName } from '../data/seoul';
 
 interface Props {
   id?: string;
@@ -42,7 +42,7 @@ const { id } = Astro.props;
         <ul>
           {district.dongs.map((dong, index) => (
             <li>
-              <a href={`/dong/${district.code}-${index + 1}`}>
+              <a href={`/dong/${getDongSlug(district.code, dong, index)}`}>
                 <strong>
                   <span data-copy-locale="ko">{dong}</span>
                   <span data-copy-locale="en">{getLocalizedDongName(dong, 'en')}</span>

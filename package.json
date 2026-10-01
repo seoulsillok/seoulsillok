@@ -6,6 +6,7 @@
     "astro": "astro",
     "dev": "astro dev",
     "sync-instagram": "node ./scripts/sync-instagram-posts.mjs",
+    "import-instagram": "node ./scripts/sync-instagram-posts.mjs --save",
     "build": "npm run sync-instagram && astro build",
     "postbuild": "node ./scripts/write-assetsignore.js",
     "preview": "astro build && wrangler dev",

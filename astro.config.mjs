@@ -6,8 +6,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
-	// TODO: replace with your production site URL (e.g. 'https://seoulsillok.com')
-	site: 'https://your-domain.com',
+	site: 'https://seoulsillok.com',
 	integrations: [mdx(), sitemap()],
 	adapter: cloudflare({
 		platformProxy: {

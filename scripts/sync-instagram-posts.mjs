@@ -2,126 +2,145 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const PROFILE_URL = 'https://www.instagram.com/seoulsillok/';
-const OUTPUT_PATH = path.resolve(process.cwd(), 'src/data/instagram-posts.generated.ts');
+const DATA = path.resolve(process.cwd(), 'src/data');
+const OUTPUT_PATH = path.join(DATA, 'instagram-posts.generated.ts');
+const MANUAL_PATH = path.join(DATA, 'instagram-posts.manual.json');
+const BOUNDARIES_PATH = path.join(DATA, 'seoul-dong-boundaries.geojson');
+const CROSSWALK_PATH = path.join(DATA, 'seoul-dong-crosswalk.csv');
 
-const fallbackCaption = `풍납동 산책로
+const boundaries = JSON.parse(await fs.readFile(BOUNDARIES_PATH, 'utf8'));
+const catalog = boundaries.features.map(({ properties }) => ({
+  key: `${properties.districtCode}:${properties.dongName}`,
+  name: properties.dongName,
+  district: properties.districtKo
+}));
+const validKeys = new Set(catalog.map(({ key }) => key));
+const keyByPlace = new Map(catalog.map(({ key, name, district }) => [`${district}:${name}`, key]));
+const crosswalk = (await fs.readFile(CROSSWALK_PATH, 'utf8')).trim().split('\n').slice(1);
+const aliasTargets = new Map();
+for (const row of crosswalk) {
+  const [, district, legalDong, pageDong] = row.trim().split(',');
+  if (legalDong === pageDong || keyByPlace.has(`${district}:${legalDong}`)) continue;
+  const aliasKey = `${district}:${legalDong}`;
+  const targets = aliasTargets.get(aliasKey) || new Set();
+  targets.add(pageDong);
+  aliasTargets.set(aliasKey, targets);
+}
+const aliases = Array.from(aliasTargets, ([place, targets]) => {
+  if (targets.size !== 1) return null;
+  const [district, name] = place.split(':');
+  const page = Array.from(targets)[0];
+  return { key: keyByPlace.get(`${district}:${page}`), name, district };
+}).filter(Boolean);
 
-1. 태백식당 (점심)
-2. 두부부 (베이커리)
-3. 인트로 베이커리 (베이커리)
-4. 풍납백제 문화공원 (산책)
-5. 광나루 한강공원 (산책)
-6. 유천냉면 (저녁)
-
-머물 곳 잃은 마음은
-정처 없이 계절을 헤매이고
-흩어지는 찰나의 순간들을
-두 눈 가득히 꾹꾹 눌러 담네
-
-Pungnap-dong Walk Route
-
-1. TaeBaek Restaurant (Lunch)
-2. Dobubu (Bakery)
-3. Intro Bakery (Bakery)
-4. Pungnap Baekje Cultural Park (Walk)
-5. Gwangnaru Hangang Park (Walk)
-6. Yucheon Naengmyeon (Dinner)
-
-A heart with nowhere to rest
-Wanders aimlessly through the seasons
-Those scattering, fleeting moments
-I fill my eyes, pressing them deep inside
-
-#서울 #풍납동 #풍납동맛집 #풍납동맛집추천 #풍납동카페 #풍납동카페추천 #산책 #산책로 #맛집 #카페 #korea #seoultravel #seoul #Pungnap_dong`;
-
-const fallbackMap = {
-  풍납동: {
-    title: '풍납동 산책로',
-    url: PROFILE_URL,
-    caption: fallbackCaption
-  }
-};
-
-function extractDong(caption) {
-  const match = caption.match(/([가-힣A-Za-z0-9]+동)/);
-  return match ? match[1] : null;
+function validPost(post) {
+  return post && typeof post.url === 'string' &&
+    /^https:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+\/?/.test(post.url);
 }
 
-async function fetchInstagramPosts(token, userId) {
-  const posts = [];
-  let nextUrl = `https://graph.facebook.com/v22.0/${userId}/media?fields=id,caption,permalink,timestamp&limit=100&access_token=${token}`;
+async function readManualPosts() {
+  const manual = JSON.parse(await fs.readFile(MANUAL_PATH, 'utf8'));
+  const result = {};
+  for (const [key, posts] of Object.entries(manual)) {
+    if (!validKeys.has(key)) throw new Error(`Unknown dong in ${MANUAL_PATH}: ${key}`);
+    if (!Array.isArray(posts) || posts.some((post) => !validPost(post))) {
+      throw new Error(`Invalid Instagram posts for ${key}`);
+    }
+    result[key] = posts.map((post) => ({
+      title: post.title || key.split(':')[1],
+      url: post.url,
+      caption: post.caption || '',
+      ...(post.timestamp ? { timestamp: post.timestamp } : {})
+    }));
+  }
+  return result;
+}
 
+async function fetchInstagramPosts(token) {
+  const profileUrl = new URL('https://graph.instagram.com/v26.0/me');
+  profileUrl.searchParams.set('fields', 'user_id,username');
+  profileUrl.searchParams.set('access_token', token);
+  const profileResponse = await fetch(profileUrl);
+  if (!profileResponse.ok) throw new Error(`Instagram profile request failed (${profileResponse.status})`);
+  const profilePayload = await profileResponse.json();
+  const profile = profilePayload.data?.[0] || profilePayload;
+  if (profile.username?.toLowerCase() !== 'seoulsillok') {
+    throw new Error(`Instagram token belongs to @${profile.username || 'unknown'}, expected @seoulsillok`);
+  }
+  const userId = profile.user_id || profile.id;
+  if (!userId) throw new Error('Instagram profile response has no user ID');
+  const posts = [];
+  const mediaUrl = new URL(`https://graph.instagram.com/v26.0/${encodeURIComponent(userId)}/media`);
+  mediaUrl.searchParams.set('fields', 'id,caption,permalink,timestamp');
+  mediaUrl.searchParams.set('limit', '100');
+  mediaUrl.searchParams.set('access_token', token);
+  let nextUrl = mediaUrl.toString();
   while (nextUrl) {
     const response = await fetch(nextUrl);
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Instagram API request failed (${response.status}): ${text}`);
-    }
-
+    if (!response.ok) throw new Error(`Instagram API request failed (${response.status})`);
     const payload = await response.json();
-    const items = Array.isArray(payload.data) ? payload.data : [];
-
-    for (const item of items) {
-      if (!item.caption || !item.permalink) continue;
-      posts.push({
-        caption: item.caption,
-        permalink: item.permalink,
-        timestamp: item.timestamp || ''
-      });
+    for (const item of payload.data || []) {
+      if (item.caption && validPost({ url: item.permalink })) posts.push(item);
     }
-
-    nextUrl = payload?.paging?.next || '';
+    nextUrl = payload.paging?.next || '';
   }
-
   return posts;
 }
 
-function buildPostMap(posts) {
-  const byDong = {};
-
-  for (const post of posts) {
-    const dong = extractDong(post.caption);
-    if (!dong) continue;
-    const title = post.caption.split('\n')[0].trim() || `${dong} 기록`;
-
-    byDong[dong] = {
-      title,
-      url: post.permalink,
-      caption: post.caption.trim(),
-      timestamp: post.timestamp
-    };
-  }
-
-  return byDong;
+function matchDong(caption) {
+  const firstLine = caption.split('\n').map((line) => line.trim()).find(Boolean) || '';
+  const candidates = [...catalog, ...aliases].filter(({ name }) => firstLine.includes(name));
+  if (!candidates.length) return null;
+  const longest = Math.max(...candidates.map(({ name }) => name.length));
+  const matches = candidates.filter(({ name }) => name.length === longest);
+  if (matches.length === 1) return matches[0].key;
+  const namedDistrict = matches.filter(({ district }) => firstLine.includes(district));
+  if (namedDistrict.length === 1) return namedDistrict[0].key;
+  // A name such as 신사동 occurs in two districts. Never guess which one.
+  return null;
 }
 
-async function writeOutput(map, sourceLabel) {
-  const content = `export type InstagramPost = {\n  title: string;\n  url: string;\n  caption: string;\n  timestamp?: string;\n};\n\nexport const INSTAGRAM_PROFILE_URL = ${JSON.stringify(PROFILE_URL)};\n\nexport const INSTAGRAM_POSTS_BY_DONG: Record<string, InstagramPost> = ${JSON.stringify(map, null, 2)};\n\nexport const INSTAGRAM_POST_SOURCE = ${JSON.stringify(sourceLabel)};\nexport const INSTAGRAM_SYNCED_AT = ${JSON.stringify(new Date().toISOString())};\n`;
+function mergePosts(manual, apiPosts) {
+  const result = structuredClone(manual);
+  for (const post of apiPosts) {
+    const key = matchDong(post.caption);
+    if (!key) continue;
+    const list = result[key] || (result[key] = []);
+    if (list.some(({ url }) => url === post.permalink)) continue;
+    list.push({
+      title: post.caption.split('\n').find((line) => line.trim())?.trim() || key.split(':')[1],
+      url: post.permalink,
+      caption: post.caption.trim(),
+      ...(post.timestamp ? { timestamp: post.timestamp } : {})
+    });
+  }
+  return result;
+}
 
+async function writeOutput(map, source) {
+  const content = `export type InstagramPost = {\n  title: string;\n  url: string;\n  caption: string;\n  timestamp?: string;\n};\n\nexport const INSTAGRAM_PROFILE_URL = ${JSON.stringify(PROFILE_URL)};\n\nexport const INSTAGRAM_POSTS_BY_DONG: Record<string, InstagramPost[]> = ${JSON.stringify(map, null, 2)};\n\nexport const INSTAGRAM_POST_SOURCE = ${JSON.stringify(source)};\n`;
   await fs.writeFile(OUTPUT_PATH, content, 'utf8');
 }
 
-async function main() {
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-  const userId = process.env.INSTAGRAM_IG_USER_ID;
-
-  if (!token || !userId) {
-    await writeOutput(fallbackMap, 'fallback');
-    console.log('[sync-instagram-posts] Missing INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_IG_USER_ID. Wrote fallback data.');
-    return;
-  }
-
+const manual = await readManualPosts();
+const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+const save = process.argv.includes('--save');
+if (save && !token) throw new Error('INSTAGRAM_ACCESS_TOKEN is required with --save');
+let apiPosts = [];
+let source = 'manual';
+if (token) {
   try {
-    const posts = await fetchInstagramPosts(token, userId);
-    const map = buildPostMap(posts);
-    const merged = { ...fallbackMap, ...map };
-    await writeOutput(merged, 'graph-api');
-    console.log(`[sync-instagram-posts] Synced ${posts.length} posts, mapped ${Object.keys(map).length} dongs.`);
+    apiPosts = await fetchInstagramPosts(token);
+    source = 'graph-api-and-manual';
   } catch (error) {
-    await writeOutput(fallbackMap, 'fallback-error');
-    console.warn('[sync-instagram-posts] Failed to sync from API. Wrote fallback data.');
-    console.warn(String(error));
+    if (save) throw error;
+    console.warn(`[sync-instagram-posts] ${String(error)}. Keeping manual links.`);
   }
 }
-
-main();
+const merged = mergePosts(manual, apiPosts);
+if (save) {
+  await fs.writeFile(MANUAL_PATH, `${JSON.stringify(merged, null, 2)}\n`, 'utf8');
+  console.log(`[sync-instagram-posts] Saved ${Object.keys(merged).length} dong link groups to ${MANUAL_PATH}.`);
+}
+await writeOutput(merged, source);
+console.log(`[sync-instagram-posts] ${apiPosts.length} API posts checked; ${Object.keys(merged).length} dongs have links.`);
