@@ -13,18 +13,26 @@ const isInteractive = mode === 'interactive';
 
 const mapFeatureBySlug = new Map(SEOUL_MAP.features.map((feature) => [feature.slug, feature]));
 const districtMapByCode = new Map(SEOUL_MAP.districts.map((district) => [district.code, district]));
+const districtColorByCode = new Map(districts.map((district, index) => {
+  const hue = Math.round((18 + index * 137.508) % 360);
+  return [district.code, { fill: `hsl(${hue} 54% 70%)`, accent: `hsl(${hue} 45% 29%)` }];
+}));
 
 const districtPayload = districts.map((district) => {
   const mapDistrict = districtMapByCode.get(district.code);
+  const centerX = mapDistrict?.centerX ?? district.map.x;
+  const centerY = mapDistrict?.centerY ?? district.map.y;
+  const colors = districtColorByCode.get(district.code) ?? { fill: '#9fb9ad', accent: '#33574f' };
 
   return {
     code: district.code,
     nameKo: district.nameKo,
     nameEn: getDistrictEnglishNameByCode(district.code),
-    x: district.map.x,
-    y: district.map.y,
-    centerX: mapDistrict?.centerX ?? district.map.x,
-    centerY: mapDistrict?.centerY ?? district.map.y,
+    x: centerX,
+    y: centerY,
+    centerX,
+    centerY,
+    ...colors,
     minX: mapDistrict?.minX ?? Math.max(0, district.map.x - 8),
     maxX: mapDistrict?.maxX ?? Math.min(100, district.map.x + 8),
     minY: mapDistrict?.minY ?? Math.max(0, district.map.y - 8),
@@ -60,6 +68,7 @@ const districtPayload = districts.map((district) => {
           <a
             href={`/dong/${feature.slug}`}
             class="map-feature"
+            style={`--district-highlight:${districtColorByCode.get(feature.districtCode)?.fill ?? '#9fb9ad'};`}
             data-map-feature
             data-district-code={feature.districtCode}
             data-dong-slug={feature.slug}
@@ -76,8 +85,8 @@ const districtPayload = districts.map((district) => {
       </svg>
 
       <ul class="district-layer" aria-label="서울 구 선택" data-district-layer>
-        {districts.map((district) => (
-          <li style={`left:${district.map.x}%; top:${district.map.y}%;`}>
+        {districtPayload.map((district) => (
+          <li style={`left:${district.x}%; top:${district.y}%; --district-accent:${district.accent};`}>
             {isInteractive ? (
               <button
                 type="button"
@@ -87,20 +96,20 @@ const districtPayload = districts.map((district) => {
                 data-district-btn
                 data-district-code={district.code}
                 data-district-name={district.nameKo}
-                data-district-name-en={getDistrictEnglishNameByCode(district.code)}
+                data-district-name-en={district.nameEn}
               >
                 <span data-copy-locale="ko">{district.nameKo}</span>
-                <span data-copy-locale="en">{getDistrictEnglishNameByCode(district.code)}</span>
+                <span data-copy-locale="en">{district.nameEn}</span>
               </button>
             ) : (
               <a
                 href={`/#district-${district.code}`}
                 title={`${district.nameKo} 보기`}
                 data-district-name={district.nameKo}
-                data-district-name-en={getDistrictEnglishNameByCode(district.code)}
+                data-district-name-en={district.nameEn}
               >
                 <span data-copy-locale="ko">{district.nameKo}</span>
-                <span data-copy-locale="en">{getDistrictEnglishNameByCode(district.code)}</span>
+                <span data-copy-locale="en">{district.nameEn}</span>
               </a>
             )}
           </li>
@@ -144,8 +153,8 @@ const districtPayload = districts.map((district) => {
 
   {isInteractive ? (
     <p class="map-note">
-      <span data-copy-locale="ko">실제 법정동 경계를 바탕으로 215개 동네를 표시합니다. 일부 행정동 이름은 여러 법정동을 하나로 묶습니다.</span>
-      <span data-copy-locale="en">This map shows 215 neighborhoods from legal dong boundaries. Some administrative dong names group several legal dongs.</span>
+      <span data-copy-locale="ko">실제 법정동 경계를 바탕으로 215개 동네를 표시합니다. 구 이름이나 동 경계에 마우스를 올리면 같은 구 전체가 강조되고, 구 이름을 누르면 확대됩니다.</span>
+      <span data-copy-locale="en">This map shows 215 neighborhoods from legal dong boundaries. Hover over a district name or dong to highlight the whole district, then select its name to zoom in.</span>
     </p>
   ) : null}
 
@@ -271,12 +280,35 @@ const districtPayload = districts.map((district) => {
       };
 
       const updateFeatureState = (code) => {
+        root.classList.toggle('has-highlight', Boolean(code));
         mapFeatures.forEach((feature) => {
           const isActive = Boolean(code) && feature.dataset.districtCode === code;
           feature.classList.toggle('active', isActive);
           feature.classList.toggle('inactive', Boolean(code) && !isActive);
         });
       };
+
+      const setPreview = (code) => {
+        if (activeDistrictCode) return;
+        updateFeatureState(code);
+        districtButtons.forEach((button) => {
+          button.classList.toggle('preview', Boolean(code) && button.dataset.districtCode === code);
+        });
+      };
+
+      mapFeatures.forEach((feature) => {
+        feature.addEventListener('pointerenter', () => setPreview(feature.dataset.districtCode || ''));
+        feature.addEventListener('focus', () => setPreview(feature.dataset.districtCode || ''));
+        feature.addEventListener('pointerleave', () => setPreview(''));
+        feature.addEventListener('blur', () => setPreview(''));
+      });
+
+      districtButtons.forEach((button) => {
+        button.addEventListener('pointerenter', () => setPreview(button.dataset.districtCode || ''));
+        button.addEventListener('focus', () => setPreview(button.dataset.districtCode || ''));
+        button.addEventListener('pointerleave', () => setPreview(''));
+        button.addEventListener('blur', () => setPreview(''));
+      });
 
       const buildDongMarkers = (district) => {
         if (!(dongLayer instanceof HTMLElement)) return;
@@ -320,10 +352,12 @@ const districtPayload = districts.map((district) => {
         districtButtons.forEach((button) => {
           const isActive = button.dataset.districtCode === code;
           button.classList.toggle('active', isActive);
+          button.classList.remove('preview');
           button.setAttribute('aria-pressed', String(isActive));
         });
 
         root.classList.toggle('has-selection', Boolean(selected));
+        root.style.setProperty('--selected-accent', selected?.accent || '#33574f');
         updateFeatureState(selected?.code || '');
 
         if (!(resetButton instanceof HTMLButtonElement)) return;
@@ -385,10 +419,6 @@ const districtPayload = districts.map((district) => {
     --map-fill-base: #e8dfcf;
     --map-fill-hover: #cfbf97;
     --map-fill-inactive: #efe9de;
-    --map-fill-active: #87a79b;
-    --district-active-bg: #33574f;
-    --district-active-border: #33574f;
-    --district-active-text: #fbf8f1;
     --dong-label-bg: rgba(255, 252, 246, 0.96);
     --dong-label-border: rgba(59, 48, 29, 0.18);
     --dong-label-text: #2a2218;
@@ -446,13 +476,13 @@ const districtPayload = districts.map((district) => {
     filter: brightness(1.01);
   }
 
-  .map-wrap.has-selection .map-feature.inactive path {
+  .map-wrap.has-highlight .map-feature.inactive path {
     fill: var(--map-fill-inactive);
     opacity: 0.34;
   }
 
-  .map-wrap.has-selection .map-feature.active path {
-    fill: var(--map-fill-active);
+  .map-wrap.has-highlight .map-feature.active path {
+    fill: var(--district-highlight);
     opacity: 1;
   }
 
@@ -478,6 +508,10 @@ const districtPayload = districts.map((district) => {
 
   .map-wrap.has-selection .dong-layer {
     opacity: 1;
+  }
+
+  .map-wrap.has-selection .district-layer {
+    z-index: 4;
   }
 
   .district-layer li,
@@ -526,6 +560,13 @@ const districtPayload = districts.map((district) => {
     color: #faf8f2;
     border-color: #1f1d19;
     box-shadow: 0 14px 30px rgba(31, 29, 25, 0.18);
+  }
+
+  .map-wrap[data-map-mode='interactive'] .district-layer button.preview,
+  .map-wrap[data-map-mode='interactive'] .district-layer button.active {
+    background: var(--district-accent);
+    color: #fff;
+    border-color: var(--district-accent);
   }
 
   .district-layer button:focus-visible,
@@ -587,10 +628,12 @@ const districtPayload = districts.map((district) => {
     gap: 0.45rem;
     border-radius: 999px;
     padding: 0.38rem 0.7rem;
+    border-color: var(--selected-accent, #33574f);
   }
 
   .selection-badge strong {
     font-size: 0.78rem;
+    color: var(--selected-accent, #33574f);
   }
 
   .selection-badge span {
@@ -640,9 +683,9 @@ const districtPayload = districts.map((district) => {
   .map-wrap.has-selection .district-layer button.active {
     position: relative;
     z-index: 1;
-    background: var(--district-active-bg);
-    color: var(--district-active-text);
-    border-color: var(--district-active-border);
+    background: var(--district-accent);
+    color: #fff;
+    border-color: var(--district-accent);
     box-shadow: 0 14px 30px rgba(33, 69, 62, 0.22);
   }
 
@@ -689,6 +732,11 @@ const districtPayload = districts.map((district) => {
   :global(.map-dong-panel-link:hover) {
     border-color: #1f1d19;
     background: #fffdf9;
+  }
+
+  .map-wrap.has-selection :global(.map-dong-link),
+  .map-wrap.has-selection :global(.map-dong-panel-link) {
+    border-color: var(--selected-accent, #33574f);
   }
 
   .reset-btn {

@@ -96,6 +96,7 @@ function projectFeatures(features) {
 
     const labelPoint = getLabelPoint(normalizedMultiPolygons);
     const bounds = getNormalizedBounds(normalizedMultiPolygons);
+    const centroid = getMultiPolygonCentroidMetrics(normalizedMultiPolygons, labelPoint);
 
     return {
       slug: feature.slug,
@@ -108,7 +109,9 @@ function projectFeatures(features) {
       labelXPercent: roundTo((labelPoint[0] / width) * 100, 2),
       labelYPercent: roundTo((labelPoint[1] / height) * 100, 2),
       bounds,
-      area: bounds.area
+      area: centroid.area,
+      centroidX: centroid.cx,
+      centroidY: centroid.cy
     };
   });
 
@@ -190,8 +193,7 @@ function getNormalizedBounds(multiPolygons) {
     minX: roundTo(minX, 1),
     maxX: roundTo(maxX, 1),
     minY: roundTo(minY, 1),
-    maxY: roundTo(maxY, 1),
-    area: (maxX - minX) * (maxY - minY)
+    maxY: roundTo(maxY, 1)
   };
 }
 
@@ -368,6 +370,28 @@ function getRingCentroidMetrics(ring) {
   };
 }
 
+function getMultiPolygonCentroidMetrics(multiPolygons, fallbackPoint) {
+  let area = 0;
+  let centroidX = 0;
+  let centroidY = 0;
+
+  for (const multiPolygon of multiPolygons) {
+    for (const polygon of multiPolygon) {
+      polygon.forEach((ring, index) => {
+        const metrics = getRingCentroidMetrics(ring);
+        const ringArea = Math.abs(metrics.area) * (index === 0 ? 1 : -1);
+        area += ringArea;
+        centroidX += metrics.cx * ringArea;
+        centroidY += metrics.cy * ringArea;
+      });
+    }
+  }
+
+  return area > 0
+    ? { area, cx: centroidX / area, cy: centroidY / area }
+    : { area: 0, cx: fallbackPoint[0], cy: fallbackPoint[1] };
+}
+
 function getPolygonBoxCenter(polygon) {
   return getRingBoxCenter(polygon[0]);
 }
@@ -451,12 +475,19 @@ function buildDistrictEntries(projectedFeatures) {
   return DISTRICTS.map((district) => {
     const dongs = byDistrict.get(district.code) || [];
     const bounds = getDistrictBounds(dongs);
+    const totalArea = dongs.reduce((sum, dong) => sum + dong.area, 0);
+    const centerX = totalArea
+      ? dongs.reduce((sum, dong) => sum + dong.centroidX * dong.area, 0) / totalArea
+      : (bounds.minX + bounds.maxX) / 2;
+    const centerY = totalArea
+      ? dongs.reduce((sum, dong) => sum + dong.centroidY * dong.area, 0) / totalArea
+      : (bounds.minY + bounds.maxY) / 2;
 
     return {
       code: district.code,
       nameKo: district.nameKo,
-      centerX: roundTo(((bounds.minX + bounds.maxX) / 2 / projectedFeatures.width) * 100, 2),
-      centerY: roundTo(((bounds.minY + bounds.maxY) / 2 / projectedFeatures.height) * 100, 2),
+      centerX: roundTo((centerX / projectedFeatures.width) * 100, 2),
+      centerY: roundTo((centerY / projectedFeatures.height) * 100, 2),
       minX: roundTo((bounds.minX / projectedFeatures.width) * 100, 2),
       maxX: roundTo((bounds.maxX / projectedFeatures.width) * 100, 2),
       minY: roundTo((bounds.minY / projectedFeatures.height) * 100, 2),
